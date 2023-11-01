@@ -13,6 +13,7 @@ from carball.analysis.constants.field_constants import *
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 
 
 class SaltieHit:

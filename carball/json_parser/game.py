@@ -13,6 +13,7 @@ from .game_info import GameInfo
 from .frame_parser import parse_frames
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 
 DATETIME_FORMATS = [
     '%Y-%m-%d %H-%M-%S',

@@ -8,6 +8,7 @@ from ...json_parser.game import Game
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 
 
 def clean_replay(game: Game, data_frame: pd.DataFrame, proto_game: game_pb2.Game, player_map):

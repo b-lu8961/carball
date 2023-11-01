@@ -31,6 +31,7 @@ from ..json_parser.game import Game
 from ..analysis.events.event_creator import EventsCreator
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 
 
 class AnalysisManager:

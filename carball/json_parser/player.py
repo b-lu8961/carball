@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .team import Team
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
 bot_map = get_bot_map()
 
 
