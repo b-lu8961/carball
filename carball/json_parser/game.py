@@ -105,7 +105,12 @@ class Game:
         if parse_replay:
             self.all_data = parse_frames(self)
             self.parse_all_data(self.all_data, clean_player_names)
-            logger.info("Finished parsing %s" % self)
+        
+        for player in self.players:
+            team = [team for team in self.teams if (team.is_orange == player.is_orange)][0]
+            player.team_name = team.name
+        
+        logger.info("Finished parsing %s" % self)
 
     def __repr__(self):
         team_0_name = self.teams[0].name

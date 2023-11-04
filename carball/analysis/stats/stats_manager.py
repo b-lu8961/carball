@@ -36,6 +36,7 @@ class StatsManager:
         self.calculate_team_stats(game, proto_game, proto_game.teams, player_map, data_frame)
         self.calculate_game_stats(game, proto_game, player_map, data_frame)
         self.calculate_hit_stats(game, proto_game, player_map, data_frame)
+        self.calculate_metadata_stats(game, proto_game, player_map, data_frame)
 
     @staticmethod
     def calculate_player_stats(game: Game, proto_game: game_pb2.Game,
@@ -86,3 +87,9 @@ class StatsManager:
                 next_hit = hits[hit_index + 1]
                 for hit_stat in hit_stats:
                     hit_stat.calculate_next_hit_stat(game, proto_game, current_hit, next_hit, player_map, hit_index)
+
+    @staticmethod
+    def calculate_metadata_stats(game: Game, proto_game: game_pb2.Game, player_map: Dict[str, Player],
+                             data_frame: pd.DataFrame):
+        for stat_function in StatsList.get_metadata_stats():
+            stat_function.calculate_stat(proto_game.game_metadata, game, proto_game, player_map, data_frame)

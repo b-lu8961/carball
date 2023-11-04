@@ -33,5 +33,7 @@ class ApiPlayer:
             proto_player.party_leader.id = player.party_leader
         if player.is_bot is not None:
             proto_player.is_bot = player.is_bot
+        if player.team_name is not None:
+            proto_player.team_name = player.team_name
 
         return proto_player

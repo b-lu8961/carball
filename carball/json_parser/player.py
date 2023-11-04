@@ -19,6 +19,7 @@ class Player:
         self.name = None
         self.online_id = None
         self.team = None  # using team class. set later.
+        self.team_name = None
         self.is_orange = None
         self.score = None
         self.goals = None

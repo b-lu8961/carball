@@ -48,8 +48,8 @@ class CarHandler(BaseActorHandler):
         }
 
     def add_demo(self, actor, frame_number):
-        if 'TAGame.Car_TA:ReplicatedDemolish' in actor:
-            demo_data = actor['TAGame.Car_TA:ReplicatedDemolish']
+        if 'TAGame.Car_TA:ReplicatedDemolishGoalExplosion' in actor:
+            demo_data = actor['TAGame.Car_TA:ReplicatedDemolishGoalExplosion']
             # add attacker and victim player ids
             attacker_car_id = demo_data['attacker']
             victim_car_id = demo_data['victim']
@@ -69,4 +69,4 @@ class CarHandler(BaseActorHandler):
                     logger.debug('RepDemo Names: Att: %s. Def: %s' %
                                  (self.parser.player_dicts[attacker_player_id]['name'],
                                   self.parser.player_dicts[victim_player_id]['name']))
-                    actor.pop('TAGame.Car_TA:ReplicatedDemolish')
+                    actor.pop('TAGame.Car_TA:ReplicatedDemolishGoalExplosion')

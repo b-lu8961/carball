@@ -9,5 +9,7 @@ class ApiDemo:
         for demo in game.demos:
             proto_demo = proto_demo_list.add()
             proto_demo.frame_number = demo['frame_number']
+            proto_demo.attacker_name = demo['attacker'].name
+            proto_demo.victim_name = demo['victim'].name
             id_creator(proto_demo.attacker_id, demo['attacker'].name)
             id_creator(proto_demo.victim_id, demo['victim'].name)

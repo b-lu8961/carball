@@ -1,5 +1,6 @@
 import logging
 from typing import Dict
+from carball.generated.api import game_pb2
 
 import numpy as np
 import pandas as pd
@@ -36,3 +37,16 @@ class DemoStat(BaseStat):
             player_stat_map[player].demo_stats.num_demos_inflicted = player_demo_counts[player]
         for player in player_got_demoed_counts:
             player_stat_map[player].demo_stats.num_demos_taken = player_got_demoed_counts[player]
+
+    def calculate_stat(self, proto_stat, game: Game, proto_game: game_pb2.Game, player_map: Dict[str, Player], 
+                       data_frame: pd.DataFrame):
+        for demo in proto_stat.demos:
+            try:
+                victim_pos = tuple(data_frame.loc[int(demo.frame_number - 1), (demo.victim_name, ["pos_x", "pos_y", "pos_z"])])
+                demo.location.pos_x = victim_pos[0]
+                demo.location.pos_y = victim_pos[1]
+                demo.location.pos_z = victim_pos[2]
+                demo.is_valid = True
+            except KeyError:
+                # Demo occurs after a goal (during goal explosion time)
+                demo.is_valid = False

@@ -24,4 +24,5 @@ message Player {
     optional bool is_bot = 14;
     optional float time_in_game = 15;
     optional int32 first_frame_in_game = 16;
+    optional string team_name = 17;
 }
