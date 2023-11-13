@@ -73,6 +73,13 @@ class PlayerHandler(BaseActorHandler):
         if delta != 0:
             self.parser.player_data[actor_id][frame_number]['ping'] = \
                 actor.get("Engine.PlayerReplicationInfo:Ping", None)
+            
+            self.parser.player_data[actor_id][frame_number]['match_assists'] = actor.get("TAGame.PRI_TA:MatchAssists", 0)
+            self.parser.player_data[actor_id][frame_number]['match_goals'] = actor.get("TAGame.PRI_TA:MatchGoals", 0)
+            self.parser.player_data[actor_id][frame_number]['match_saves'] = actor.get("TAGame.PRI_TA:MatchSaves", 0)
+            self.parser.player_data[actor_id][frame_number]['match_score'] = actor.get("TAGame.PRI_TA:MatchScore", 0)
+            self.parser.player_data[actor_id][frame_number]['match_shots'] = actor.get("TAGame.PRI_TA:MatchShots", 0)
+
             if 'TAGame.PRI_TA:CameraSettings' in actor:
                 # oldstyle camera settings
                 if actor_id not in self.parser.cameras_data:

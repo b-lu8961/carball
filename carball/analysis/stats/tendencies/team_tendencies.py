@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from carball.analysis.constants.basic_math import position_column_names
+from carball.analysis.constants.basic_math import position_columns
 from carball.analysis.constants.playlist import get_team_size_from_game
 from carball.analysis.stats.possession.ball_distances import BallDistanceStat
 from carball.generated.api.team_pb2 import Team
@@ -36,7 +36,7 @@ class TeamTendencies(PositionalTendencies):
     def calculate_team_center(self, data_frame, list_of_players) -> (pd.DataFrame, List[pd.DataFrame]):
         players = []
         for player in list_of_players:
-            player_frame = data_frame[player][position_column_names]
+            player_frame = data_frame[player][position_columns]
             players.append(player_frame)
 
         combined = pd.concat(players)
@@ -58,7 +58,7 @@ class TeamTendencies(PositionalTendencies):
             player = player_map[player_id.id]
             average_distance_from_center = player_distances_data_frame[player.id.id].mean(skipna=True)
             self.set_player_stats(player, player_distance_times, average_distance_from_center, team_size)
-            player_position_with_time = pd.concat([data_frame[player.name][position_column_names],
+            player_position_with_time = pd.concat([data_frame[player.name][position_columns],
                                  data_frame['game', 'delta'].rename('delta')], axis=1)
             if team_size > 2:
                 self.set_player_positional_stats(player, center_of_mass, player_position_with_time)

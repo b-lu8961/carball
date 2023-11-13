@@ -22,6 +22,7 @@ from carball.analysis.stats.rumble.goals import PreRumbleGoals, ItemGoals
 from carball.analysis.stats.dropshot.goals import DropshotGoals
 from carball.analysis.stats.dropshot.ball_phase_times import DropshotBallPhaseTimes
 from carball.analysis.stats.dropshot.damage import DropshotStats
+from carball.analysis.stats.goals.goals import GoalStats
 
 
 class StatsList:
@@ -32,42 +33,42 @@ class StatsList:
     @staticmethod
     def get_player_stats() -> List[BaseStat]:
         """These are stats that end up being assigned to a specific player"""
-        return [BoostStat(),
+        return [#BoostStat(),
                 PositionalTendencies(),
-                Averages(),
-                BallDistanceStat(),
-                ControlsStat(),
-                SpeedTendencies(),
-                CarryStat(),
-                PerPossessionStat(),
-                SpeedTendencies(),
-                RumbleItemStat(),
-                KickoffStat(),
-                DropshotStats(),
-                DemoStat()
+                #Averages(),
+                #BallDistanceStat(),
+                #ControlsStat(),
+                #SpeedTendencies(),
+                #CarryStat(),
+                #PerPossessionStat(),
+                #SpeedTendencies(),
+                #RumbleItemStat(),
+                #KickoffStat(),
+                #DropshotStats(),
+                #DemoStat()
                 ]
 
     @staticmethod
     def get_team_stats() -> List[BaseStat]:
         """These are stats that end up being assigned to a specific team"""
-        return [PossessionStat(),
+        return [#PossessionStat(),
                 TeamTendencies(),
-                RelativeTendencies(),
-                PerPossessionStat(),
-                RumbleItemStat(),
-                PreRumbleGoals(),
-                DropshotStats()
+                #RelativeTendencies(),
+                #PerPossessionStat(),
+                #RumbleItemStat(),
+                #PreRumbleGoals(),
+                #DropshotStats()
                 ]
 
     @staticmethod
     def get_general_stats() ->List[BaseStat]:
         """These are stats that end up being assigned to the game as a whole"""
         return [PositionalTendencies(),
-                SpeedTendencies(),
-                ItemGoals(),
-                DropshotGoals(),
-                DropshotBallPhaseTimes(),
-                DropshotStats()
+                #SpeedTendencies(),
+                #ItemGoals(),
+                #DropshotGoals(),
+                #DropshotBallPhaseTimes(),
+                #DropshotStats()
                 ]
 
     @staticmethod
@@ -78,3 +79,10 @@ class StatsList:
                 HitCountStat(),
                 TurnoverStat()
                 ]
+
+    @staticmethod
+    def get_metadata_stats() ->List[BaseStat]:
+        return [
+            GoalStats(),
+            DemoStat()
+        ]

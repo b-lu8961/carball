@@ -58,6 +58,11 @@ message Hit {
 
     optional bool dunk = 25;
 
+    optional bool match_assist = 26;
+    optional bool match_goal = 27;
+    optional bool match_save = 28;
+    optional bool match_shot = 29;
+
     // pseudo stats
     // is_turnover = !(goal || dribble || pass)
 

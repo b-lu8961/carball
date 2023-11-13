@@ -60,6 +60,7 @@ message Demo {
     optional string victim_name = 5;
     optional api.stats.BallData location = 6;
     optional bool is_valid = 7;
+    optional bool is_behind_ball = 8;
 }
 
 message GameMetadata {

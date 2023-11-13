@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 import numpy as np
 
-from carball.analysis.constants.basic_math import positional_columns
+from carball.analysis.constants.basic_math import pos_rot_columns
 from carball.analysis.utils.numpy_manager import write_array_to_file, read_array_from_file
 
 
@@ -49,9 +49,9 @@ class PandasManager:
     @staticmethod
     def write_pandas_to_buffer_for_tooling(df, players):
         columns = []
-        columns.append(df['ball'][positional_columns].values)
+        columns.append(df['ball'][pos_rot_columns].values)
         for player in players:
-            columns.append(df[player.name][positional_columns].values)
+            columns.append(df[player.name][pos_rot_columns].values)
         numpy_array = np.concatenate(columns, axis=1)
         compressed_array = io.BytesIO()
         np.save(compressed_array, numpy_array, allow_pickle=True, fix_imports=False)

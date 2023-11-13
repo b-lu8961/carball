@@ -213,7 +213,8 @@ class Player:
 
     def parse_data(self, _dict: dict):
         """
-        ['ping', 'pos_x', 'pos_y', 'pos_z', 'rot_x', 'rot_y', 'rot_z', 'vel_x',
+        ['ping', 'match_assists', 'match_goals', 'match_saves', 'match_score', 
+        'match_shots', 'pos_x', 'pos_y', 'pos_z', 'rot_x', 'rot_y', 'rot_z', 'vel_x',
         'vel_y', 'vel_z', 'ang_vel_x', 'ang_vel_y', 'ang_vel_z', 'throttle',
         'steer', 'handbrake', 'ball_cam', 'dodge_active', 'double_jump_active',
         'jump_active', 'boost', 'boost_active', 'power_up', 'power_up_active']
@@ -228,6 +229,10 @@ class Player:
          'double_jump_active': dtype('O'),
          'handbrake': dtype('O'),
          'jump_active': dtype('O'),
+         'match_goals': dtype('int64'), 
+         'match_saves': dtype('int64'), 
+         'match_score': dtype('int64'), 
+         'match_shots': dtype('int64'),
          'ping': dtype('int64'),
          'pos_x': dtype('float64'),
          'pos_y': dtype('float64'),

@@ -6,8 +6,8 @@ from typing import List, Dict, Callable
 import numpy as np
 import pandas as pd
 
-from carball.analysis.constants.basic_math import position_column_names, get_player_ball_displacements, \
-    positional_columns
+from carball.analysis.constants.basic_math import position_columns, get_player_ball_displacements, \
+    pos_rot_columns
 from .hitbox.hitbox import Hitbox
 from ....generated.api import game_pb2
 from ....generated.api.stats.events_pb2 import Hit
@@ -45,7 +45,11 @@ class BaseHit:
         hit_creation_time = time.time()
         logger.info('time to get get frame_numbers: %s', (hit_creation_time - start_time) * 1000)
 
-        hit_frames = data_frame.loc[hit_frame_numbers, (slice(None), positional_columns)]
+        hit_frames = data_frame.loc[hit_frame_numbers, (slice(None), pos_rot_columns)]
+        shift_idx = hit_frames.index - 1
+        one = (4 * hit_frames['ball'][position_columns])
+        two = data_frame['ball'][position_columns].loc[shift_idx].set_index(hit_frames.index)
+        hit_frames.loc[hit_frames.index, ('ball', position_columns)] = ((one + two) / 5).values
         player_displacements = {player.name: get_player_ball_displacements(hit_frames, player.name)
                                 for player in game.players}
 
@@ -115,7 +119,7 @@ class BaseHit:
                 hit.goal_number = int(goal_number)
             id_creation(hit.player_id, player_name)
             hit.collision_distance = collision_distance
-            ball_position = data_frame.ball.loc[frame_number, position_column_names]
+            ball_position = data_frame.ball.loc[frame_number, position_columns]
             hit.ball_data.pos_x = float(ball_position['pos_x'])
             hit.ball_data.pos_y = float(ball_position['pos_y'])
             hit.ball_data.pos_z = float(ball_position['pos_z'])
@@ -124,7 +128,7 @@ class BaseHit:
 
         time_diff = time.time() - hit_creation_time
         logger.info('ball hit creation time: %s', time_diff * 1000)
-        return all_hits
+        return all_hits, collision_distances_data_frame
 
     @staticmethod
     def filter_out_duplicate_hits(hits_data):
@@ -165,6 +169,9 @@ class BaseHit:
                     frame_number, player_name, collision_distance = row.Index, row.name, row.distance
 
                     if min_frame_value is None:
+                        # Add first frame as hit, then init checks
+                        hit_frames_to_keep.append(frame_number)
+                        last_added_frame_number = frame_number
                         min_frame_value = frame_number
                         min_distance = collision_distance
                         starting_frame_number = frame_number
@@ -173,6 +180,8 @@ class BaseHit:
 
                     if frame_number - starting_frame_number > MIN_DRIBBLE_FRAME_DISTANCE or row.name != old_name:
                         # Same person but a new hit reset distance checks
+                        if last_added_frame_number == min_frame_value:
+                            min_frame_value = frame_number
                         hit_frames_to_keep.append(min_frame_value)
                         last_added_frame_number = min_frame_value
 
@@ -191,7 +200,7 @@ class BaseHit:
                     hit_frames_to_keep.append(min_frame_value)
 
             start_row_num += 1
-        return hit_frames_to_keep
+        return sorted(hit_frames_to_keep)
 
     @staticmethod
     def get_hit_frame_numbers_by_ball_ang_vel(data_frame: pd.DataFrame) -> List[int]:
@@ -200,6 +209,11 @@ class BaseHit:
         ball_ang_vels = data_frame.ball.loc[:, ['ang_vel_x', 'ang_vel_y', 'ang_vel_z']]
         diff_series = ball_ang_vels.diff().any(axis=1)
         indices = diff_series.index[diff_series].tolist()
+        hit_team_nos = data_frame['ball']['hit_team_no']
+        hit_changes = hit_team_nos[hit_team_nos.diff().abs() > 0].index.tolist()
+        for idx in hit_changes:
+            if idx not in indices:
+                indices.append(idx)
         return indices
 
     @staticmethod
@@ -237,13 +251,13 @@ def get_rotation_matrix_from_row(components: pd.Series) -> np.array:
 
 
 def get_local_displacement(displacement: pd.DataFrame, rotation_matrices: pd.Series) -> pd.DataFrame:
-    displacement_vectors = np.expand_dims(displacement[position_column_names].values, 2)
+    displacement_vectors = np.expand_dims(displacement[position_columns].values, 2)
     inverse_rotation_matrices: pd.Series = np.transpose(rotation_matrices)
     inverse_rotation_array = np.stack(inverse_rotation_matrices.values)
     local_displacement = np.matmul(inverse_rotation_array, displacement_vectors)
     displacement_data_frame = pd.DataFrame(data=np.squeeze(local_displacement, 2),
                                            index=displacement.index,
-                                           columns=position_column_names)
+                                           columns=position_columns)
     return displacement_data_frame
 
 

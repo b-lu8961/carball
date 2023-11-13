@@ -42,7 +42,13 @@ class DemoStat(BaseStat):
                        data_frame: pd.DataFrame):
         for demo in proto_stat.demos:
             try:
+                attacker = player_map[demo.attacker_id.id]
+
                 victim_pos = tuple(data_frame.loc[int(demo.frame_number - 1), (demo.victim_name, ["pos_x", "pos_y", "pos_z"])])
+                
+                ball_pos = tuple(data_frame.loc[int(demo.frame_number - 1), ("ball", ["pos_x", "pos_y", "pos_z"])])
+                demo.is_behind_ball = victim_pos[1] > ball_pos[1] if attacker.is_orange else victim_pos[1] < ball_pos[1]
+
                 demo.location.pos_x = victim_pos[0]
                 demo.location.pos_y = victim_pos[1]
                 demo.location.pos_z = victim_pos[2]
