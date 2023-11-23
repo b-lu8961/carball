@@ -1,3 +1,11 @@
+from PIL import ImageFont
+
+BOUR_100 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 100)
+BOUR_80 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 80)
+BOUR_60 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 60)
+BOUR_50 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 50)
+BOUR_40 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 40)
+
 # Goal dimensions
 # blue goal -> negative y; orange goal -> positive y
 GOAL_X, GOAL_Y, GOAL_Z = 1786, 880, 642.775 
@@ -35,7 +43,8 @@ GOAL_SECTIONS = [
 SCALE = 6
 MAP_X, MAP_Y, MAP_Z = 8192 / SCALE, 10240 / SCALE, 2044 / SCALE
 CORNER_SIDE = 1152 / SCALE
-MAP_Y_THIRD = MAP_Y / 3
+MAP_Y_QUARTER = MAP_Y / 4
+MAP_X_THIRD = MAP_X / 3
 MAP_X_LIMS = (-MAP_X / 2, MAP_X / 2)
 MAP_Y_LIMS = (-MAP_Y / 2, MAP_Y / 2)
 MAP_Z_LIMS = (0, MAP_Z)
@@ -85,10 +94,66 @@ ORANGE_COLORS = [(color[2], color[1], color[0]) for color in BLUE_COLORS]
 COLOR_MAP = {'blue': BLUE_COLORS, 'orange': ORANGE_COLORS}
 
 TEAM_INFO = {
+    # Events
     "RL ESPORTS": {
         "logo": "RL_Esports.PNG",
         "c1": (78, 159, 216),
         "c2": (236, 114, 57),
+        "c3": (255, 255, 255)
+    },
+    "SALT MINE 3": {
+        "logo": "Salt_Mine_3.png",
+        "c1": (18, 36, 48),
+        "c2": (0, 160, 222),
+        "c3": (255, 255, 255)
+    },
+    "SOLO Q": {
+        "logo": "solo_q.png",
+        "c1": (0, 213, 51),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
+    },
+    "LATAM CHAMP": {
+        "logo": "latam_champ.png",
+        "c1": (245, 136, 27),
+        "c2": (32, 178, 86),
+        "c3": (255, 255, 255)
+    },
+    # Countries
+    "BRAZIL" : {
+        "logo": "brazil.png",
+        "c1": (0, 155, 58),
+        "c2": (254, 223, 0),
+        "c3": (0, 39, 118)
+    },
+    "FRANCE" : {
+        "logo": "france.png",
+        "c1": (0, 38, 84),
+        "c2": (206, 17, 38),
+        "c3": (255, 255, 255)
+    },
+    "MOROCCO" : {
+        "logo": "morocco.png",
+        "c1": (193, 39, 45),
+        "c2": (0, 98, 51),
+        "c3": (255, 255, 255)
+    },
+    "SAUDI ARABIA" : {
+        "logo": "saudi_arabia.png",
+        "c1": (0, 84, 48),
+        "c2": (6, 154, 101),
+        "c3": (255, 255, 255)
+    },
+    "SPAIN" : {
+        "logo": "spain.png",
+        "c1": (173, 21, 25),
+        "c2": (250, 189, 0),
+        "c3": (0, 68, 173)
+    },
+    "USA" : {
+        "logo": "usa.png",
+        "c1": (178, 34, 52),
+        "c2": (60, 59, 110),
         "c3": (255, 255, 255)
     },
     # EU

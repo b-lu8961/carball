@@ -1,4 +1,3 @@
-
 import logging
 import time
 from typing import List, Dict, Callable
@@ -45,6 +44,7 @@ class BaseHit:
         hit_creation_time = time.time()
         logger.info('time to get get frame_numbers: %s', (hit_creation_time - start_time) * 1000)
 
+        # Shift pos of ball slightly toward previous frame's location
         hit_frames = data_frame.loc[hit_frame_numbers, (slice(None), pos_rot_columns)]
         shift_idx = hit_frames.index - 1
         one = (4 * hit_frames['ball'][position_columns])
@@ -114,6 +114,12 @@ class BaseHit:
             frame_number, player_name, collision_distance = row.Index, row.name, row.distance
             hit = proto_game.game_stats.hits.add()
             hit.frame_number = frame_number
+            game_info = data_frame.loc[frame_number, 'game']
+            game_secs = game_info['seconds_remaining']
+            if "is_overtime" in game_info.keys() and game_info['is_overtime']:
+                hit.seconds_remaining = -1 if np.isnan(game_secs) else -1 * int(game_secs)
+            else:
+                hit.seconds_remaining = 0 if np.isnan(game_secs) else int(game_info['seconds_remaining'])
             goal_number = data_frame.at[frame_number, ('game', 'goal_number')]
             if not np.isnan(goal_number):
                 hit.goal_number = int(goal_number)
@@ -196,7 +202,8 @@ class BaseHit:
                         min_frame_value = frame_number
                         min_distance = collision_distance
 
-                if last_added_frame_number != min_frame_value:
+                if (last_added_frame_number != min_frame_value) \
+                        and (min_frame_value - last_added_frame_number) > MIN_DRIBBLE_FRAME_DISTANCE:
                     hit_frames_to_keep.append(min_frame_value)
 
             start_row_num += 1
@@ -208,7 +215,10 @@ class BaseHit:
             return []
         ball_ang_vels = data_frame.ball.loc[:, ['ang_vel_x', 'ang_vel_y', 'ang_vel_z']]
         diff_series = ball_ang_vels.diff().any(axis=1)
-        indices = diff_series.index[diff_series].tolist()
+        diff_list = diff_series.index[diff_series].tolist()
+        zeros = (ball_ang_vels == 0).all(axis=1)
+        zero_list = zeros.index[zeros].tolist()
+        indices = [idx for idx in diff_list if idx not in zero_list]
         hit_team_nos = data_frame['ball']['hit_team_no']
         hit_changes = hit_team_nos[hit_team_nos.diff().abs() > 0].index.tolist()
         for idx in hit_changes:

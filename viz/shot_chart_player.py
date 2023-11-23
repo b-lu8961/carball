@@ -28,7 +28,7 @@ def draw_marker(draw, pos, mark_type, img_height, size=MARKER_SIZE, outline=None
         draw.chord([(base_x - size, get_y(base_y + size, img_height)), (base_x + size, get_y(base_y - size, img_height))], 
             90, 270, fill=BLACK)
 
-def draw_field(player_name, data_path):
+def draw_field(player_name, game_list):
     width, height = round(constants.MAP_Y) + (MARGIN * 4), round(constants.MAP_X) + (MARGIN * 2)
     img = Image.new(mode="RGBA", size = (width, height), color=WHITE)
     
@@ -37,9 +37,10 @@ def draw_field(player_name, data_path):
 
     player = None
     gp, shots, goals = 0, 0, 0
-    game_iter = utils.read_group_data(data_path)
-    for game in game_iter:
+    
+    for game in game_list:
         active_players = [player.name for player in game.players]
+        #print(active_players)
         if player_name not in active_players:
             continue
         
@@ -48,9 +49,10 @@ def draw_field(player_name, data_path):
         gp += 1
         player_hits = [hit for hit in game.game_stats.hits if hit.player_id.id == player.id.id]
         for hit in player_hits:
-            size = (((hit.ball_data.pos_z / constants.SCALE) / constants.MAP_Z) * MARKER_SIZE) + MARKER_SIZE
+            size = ((((hit.ball_data.pos_z - constants.BALL_RAD) / constants.SCALE) / constants.MAP_Z) * (1.5 * MARKER_SIZE)) + MARKER_SIZE
             if player.is_orange:
-                hit.location.pos_y *= -1
+                hit.ball_data.pos_y *= -1
+                hit.ball_data.pos_x *= -1
                 
             if hit.match_shot:
                 shots += 1
@@ -67,7 +69,7 @@ def draw_field(player_name, data_path):
     
     return img, (gp, shots, goals, round(100 * (goals / shots), 1))
 
-def create_image(player_name, data_path, config):
+def create_image(player_name, game_list, config):
     img = Image.new(mode = "RGBA", size = (IMAGE_X, IMAGE_Y), color = WHITE)
     draw = ImageDraw.Draw(img)
     
@@ -75,25 +77,18 @@ def create_image(player_name, data_path, config):
     logo_width, _ = utils.draw_team_logo(img, MARGIN, config["logo"])
 
     # Main field image
-    goal_image, counts = draw_field(player_name, data_path)
+    goal_image, counts = draw_field(player_name, game_list)
     goal_img_width, goal_img_height = goal_image.width, goal_image.height
     img.paste(goal_image, (MARGIN, get_y(goal_image.height + MARGIN, IMAGE_Y)))
 
-    font_big = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 80)
-    font_medium = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 60)
-    font_50 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 50)
-    font_small = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 40)
-
     # Title text
-    draw.text((logo_width + 50 + MARGIN, 10 + MARGIN), config["t1"], fill=BLACK, font=font_big)
-    draw.text((logo_width + 50 + MARGIN, 90 + MARGIN), config["t2"], fill=DARK_GREY, font=font_small)
-    draw.text((logo_width + 50 + MARGIN, 140 + MARGIN), config["t3"], fill=DARK_GREY, font=font_small)
+    utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Attack direction text
     attack_text = "Attacking Direction"
-    attack_len = draw.textlength(attack_text, font=font_50)
+    attack_len = draw.textlength(attack_text, font=constants.BOUR_50)
     draw.text((MID_X - (attack_len / 2) + MARGIN, get_y(goal_img_height + (1.5 * MARGIN), IMAGE_Y)), 
-        f"{attack_text} >>", fill=DARK_GREY, font=font_50)
+        f"{attack_text} >>", fill=DARK_GREY, font=constants.BOUR_50)
     
     # Detail text on right
     detail_y = goal_img_height - (4 * MARGIN)
@@ -110,35 +105,37 @@ def create_image(player_name, data_path, config):
             (goal_img_width + p2[0] + detail_size, get_y(detail_y - p2[1] - detail_size, IMAGE_Y))
         ], fill=constants.BLUE_COLORS[0])
     draw.multiline_text((goal_img_width + (2 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)), 
-        f"{counts[0]}\n\n\n\n{counts[1]}\n\n\n\n{counts[2]}\n\n\n\n{counts[3]}", fill=BLACK, font=font_medium, align="center"
+        f"{counts[0]}\n\n\n\n{counts[1]}\n\n\n\n{counts[2]}\n\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
     )
     draw.multiline_text((goal_img_width + (6 * MARGIN), get_y(detail_y, IMAGE_Y)),
-        "games played\n\n\n\nshots\n\n\n\ngoals\n\n\n\nshooting %", fill=DARK_GREY, font=font_medium
+        "games played\n\n\n\nshots\n\n\n\ngoals\n\n\n\nshooting %", fill=DARK_GREY, font=constants.BOUR_60
     )
 
     # Legend below detail text
     bbox = draw.multiline_textbbox((goal_img_width + (6 * MARGIN), get_y(detail_y, IMAGE_Y)),
-        "games played\n\n\n\nshots\n\n\n\ngoals\n\n\n\nshooting %", font=font_medium)
-    utils.draw_height_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, font_small)
+        "games played\n\n\n\nshots\n\n\n\ngoals\n\n\n\nshooting %", font=constants.BOUR_60)
+    utils.draw_height_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, constants.BOUR_40)
     
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", "shots", config["img_name"]))
+    img.save(os.path.join("viz", "images", config["img_name"]))
 
 def main():
-    player_name = "ExoTiiK"
-    data_path = os.path.join("replays", "Playoffs")
+    player_name = "Firstkiller"
+    data_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - NA", "Groups", "Group A", "FIRSTKILLER VS DIAZ")
+    game_list = utils.read_series_data(data_path)
+    #game_list = utils.read_group_data(data_path)
     config = {
-        "logo": "Karmine_Corp.png",
-        "t1": "EXOTIIK",
-        "t2": "KARMINE CORP",
-        "t3": "SHOTS | WORLDS '23 - PLAYOFFS",
-        "c1": constants.TEAM_INFO["KARMINE CORP"]["c1"],
-        "c2": constants.TEAM_INFO["KARMINE CORP"]["c2"],
-        "img_name": "exotiik_shots.png"
+        "logo": "usa.png",
+        "t1": "FIRSTKILLER",
+        "t2": "SALT MINE 3 - NA | STAGE 2 | GROUP A",
+        "t3": "FIRSTKILLER 2 - 3 DIAZ",
+        "c1": constants.TEAM_INFO["USA"]["c1"],
+        "c2": constants.TEAM_INFO["USA"]["c2"],
+        "img_name": os.path.join("Salt Mine 3", "shots", "firstkiller_shots.png")
     }
-    create_image(player_name, data_path, config)
+    create_image(player_name, game_list, config)
     
     return 1
   

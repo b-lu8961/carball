@@ -54,6 +54,7 @@ def draw_field(player_name, data_path):
             total += 1
             if player.is_orange:
                 demo.location.pos_y *= -1
+                demo.location.pos_z *= -1
             if demo.is_behind_ball:
                 mark = "behind"
                 behind += 1
@@ -79,21 +80,14 @@ def create_image(player_name, data_path, config):
     goal_img_width, goal_img_height = goal_image.width, goal_image.height
     img.paste(goal_image, (MARGIN, get_y(goal_image.height + MARGIN, IMAGE_Y)))
 
-    font_big = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 80)
-    font_medium = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 60)
-    font_50 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 50)
-    font_small = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 40)
-
     # Title text
-    draw.text((logo_width + 50 + MARGIN, 10 + MARGIN), config["t1"], fill=BLACK, font=font_big)
-    draw.text((logo_width + 50 + MARGIN, 90 + MARGIN), config["t2"], fill=DARK_GREY, font=font_small)
-    draw.text((logo_width + 50 + MARGIN, 140 + MARGIN), config["t3"], fill=DARK_GREY, font=font_small)
+    utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Attack direction text
     attack_text = "Attacking Direction"
-    attack_len = draw.textlength(attack_text, font=font_50)
+    attack_len = draw.textlength(attack_text, font=constants.BOUR_50)
     draw.text((MID_X - (attack_len / 2) + MARGIN, get_y(goal_img_height + (1.5 * MARGIN), IMAGE_Y)), 
-        f"{attack_text} >>", fill=DARK_GREY, font=font_50)
+        f"{attack_text} >>", fill=DARK_GREY, font=constants.BOUR_50)
 
     # Detail text on right
     detail_y = goal_img_height - (4 * MARGIN)
@@ -109,17 +103,17 @@ def create_image(player_name, data_path, config):
             (goal_img_width + padding_two + 75, get_y(detail_y - 448 - 75, IMAGE_Y))
         ], 90, 270, outline=DARK_GREY, width=3)
     draw.multiline_text((goal_img_width + (2 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)), 
-        f"{counts[0]}\n\n\n\n{counts[1]}\n\n\n\n{counts[2]}\n\n\n\n{counts[3]}", fill=BLACK, font=font_medium, align="center"
+        f"{counts[0]}\n\n\n\n{counts[1]}\n\n\n\n{counts[2]}\n\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
     )
     draw.multiline_text((goal_img_width + (5 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)),
-        "games played\n\n\n\nbehind ball demos\n\n\n\nahead of ball demos\n\n\n\ntotal demos", fill=DARK_GREY, font=font_medium
+        "games played\n\n\n\nbehind ball demos\n\n\n\nahead of ball demos\n\n\n\ntotal demos", fill=DARK_GREY, font=constants.BOUR_60
     )
 
     # Legend below detail text
     bbox = draw.multiline_textbbox((goal_img_width + (5 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)),
-        "games played\n\n\n\nbehind ball demos\n\n\n\nahead of ball demos\n\n\n\ntotal demos", font=font_medium)
+        "games played\n\n\n\nbehind ball demos\n\n\n\nahead of ball demos\n\n\n\ntotal demos", font=constants.BOUR_60)
 
-    utils.draw_height_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, font_small)
+    utils.draw_height_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, constants.BOUR_40)
 
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
@@ -128,15 +122,17 @@ def create_image(player_name, data_path, config):
 
 def main():
     player_name = "rise."
+    display_name = "rise"
+    key = "TEAM BDS"
     data_path = os.path.join("replays", "Playoffs")
     config = {
-        "logo": "Team_BDS.png",
-        "t1": "RISE",
+        "logo": constants.TEAM_INFO[key]["logo"],
+        "t1": display_name.upper(),
         "t2": "TEAM BDS",
         "t3": "DEMOS | WORLDS '23 - PLAYOFFS",
-        "c1": constants.TEAM_INFO["TEAM BDS"]["c1"],
-        "c2": constants.TEAM_INFO["TEAM BDS"]["c2"],
-        "img_name": "rise_demos.png"
+        "c1": constants.TEAM_INFO[key]["c1"],
+        "c2": constants.TEAM_INFO[key]["c2"],
+        "img_name": f"{display_name}_demos.png"
     }
     create_image(player_name, data_path, config)
     

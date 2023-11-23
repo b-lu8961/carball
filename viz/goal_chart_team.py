@@ -84,13 +84,7 @@ def create_image(team_name: str, data_path: str, config):
     logo_width, _ = utils.draw_team_logo(img, MARGIN, config["logo"])
 
     # Title text
-    font_big = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 80)
-    font_medium = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 60)
-    font_50 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 50)
-    font_small = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 40)
-    draw.text((logo_width + 50 + MARGIN, 10 + MARGIN), config["t1"], fill=BLACK, font=font_big)
-    draw.text((logo_width + 50 + MARGIN, 90 + MARGIN), config["t2"], fill=(70,70,70), font=font_small)
-    draw.text((logo_width + 50 + MARGIN, 140 + MARGIN), config["t3"], fill=(70,70,70), font=font_small)
+    utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Main goal image
     goal_image, counts, players, team_color = draw_goal(team_name, data_path)
@@ -104,26 +98,26 @@ def create_image(team_name: str, data_path: str, config):
         f" -  - {players[2]}"
     ]
     legend_len = [
-        draw.textlength(legend_text[0], font=font_50),
-        draw.textlength(legend_text[1], font=font_50),
-        draw.textlength(legend_text[2], font=font_50),
+        draw.textlength(legend_text[0], font=constants.BOUR_50),
+        draw.textlength(legend_text[1], font=constants.BOUR_50),
+        draw.textlength(legend_text[2], font=constants.BOUR_50),
     ]
     legend_base_x = MID_X - (sum(legend_len) / 2) + 30
     legend_base_y = goal_img_height + (1.5 * MARGIN)
     icon_padding = (4, -10)
 
     draw.text((legend_base_x, get_y(legend_base_y, IMAGE_Y)), 
-        legend_text[0], fill=(70,70,70), font=font_50)
+        legend_text[0], fill=(70,70,70), font=constants.BOUR_50)
     draw.ellipse([
             (legend_base_x + icon_padding[0], get_y(legend_base_y + icon_padding[1], IMAGE_Y)), 
             (legend_base_x + 30 + icon_padding[0], get_y(legend_base_y - 30 + icon_padding[1], IMAGE_Y))], 
         fill=team_color[0])
     draw.text((legend_base_x + legend_len[0], get_y(legend_base_y, IMAGE_Y)), 
-        legend_text[1], fill=(70,70,70), font=font_50)
+        legend_text[1], fill=(70,70,70), font=constants.BOUR_50)
     draw.regular_polygon((legend_base_x + legend_len[0] + 16, get_y(legend_base_y - 25, IMAGE_Y), 15), 4, 
         fill=team_color[1], rotation=45)
     draw.text((legend_base_x + legend_len[0] + legend_len[1], get_y(legend_base_y, IMAGE_Y)), 
-        legend_text[2], fill=(70,70,70), font=font_50)
+        legend_text[2], fill=(70,70,70), font=constants.BOUR_50)
     draw.regular_polygon((legend_base_x + legend_len[0] + legend_len[1] + 17, get_y(legend_base_y - 22, IMAGE_Y), 18), 3, 
         fill=team_color[1], rotation=60)
     
@@ -135,10 +129,10 @@ def create_image(team_name: str, data_path: str, config):
         ], outline=BLACK, width=4)
 
     draw.multiline_text((goal_img_width + (2 * MARGIN), get_y(goal_img_height - MARGIN, IMAGE_Y)), 
-        f"{counts[0]}\n\n\n{counts[1]}\n\n\n{counts[2]}\n\n\n{counts[3]}", fill=BLACK, font=font_medium, align="center"
+        f"{counts[0]}\n\n\n{counts[1]}\n\n\n{counts[2]}\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
     )
     draw.multiline_text((goal_img_width + (5 * MARGIN), get_y(goal_img_height - MARGIN, IMAGE_Y)),
-        "games played\n\n\nsolo goals\n\n\nassisted goals\n\n\ntotal goals", fill=(70,70,70), font=font_medium
+        "games played\n\n\nsolo goals\n\n\nassisted goals\n\n\ntotal goals", fill=(70,70,70), font=constants.BOUR_60
     )
     
     # Dotted circle logo
