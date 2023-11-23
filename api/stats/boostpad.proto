@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "api/stats/events.proto";
+
+package api.stats;
+
+message BoostPad {
+    optional int32 label = 1;
+    optional bool big = 2;
+    optional sint32 pos_x = 3;
+    optional sint32 pos_y = 4;
+    repeated api.stats.BoostPickup pickups = 5;
+}

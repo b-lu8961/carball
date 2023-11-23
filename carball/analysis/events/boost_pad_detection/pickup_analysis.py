@@ -18,6 +18,20 @@ class PickupAnalysis:
 
     @classmethod
     def add_pickups(cls, proto_game: game_pb2.Game, data_frame: pd.DataFrame):
+        for big_boost in cls.BIG_BOOST_POSITIONS:
+            proto_game.game_stats.boost_pads.add(
+                label = big_boost[2],
+                big = True,
+                pos_x = big_boost[0],
+                pos_y = big_boost[1]
+            )
+        for small_boost in cls.SMALL_BOOST_POSITIONS:
+            proto_game.game_stats.boost_pads.add(
+                label = int(small_boost[2]),
+                big = False,
+                pos_x = int(small_boost[0]),
+                pos_y = int(small_boost[1])
+            )
 
         for player in proto_game.players:
             player_vals_df = data_frame[player.name][['pos_x', 'pos_y', 'pos_z', 'boost']].copy()
@@ -27,6 +41,21 @@ class PickupAnalysis:
             player_vals_df = player_vals_df.fillna(0)
             player_vals_df['boost_collect'] = cls.get_boost_collect(player_vals_df)
             data_frame[player.name, 'boost_collect'] = player_vals_df['boost_collect']
+            for idx in player_vals_df['boost_collect'].loc[~np.isnan(player_vals_df['boost_collect'])].index:
+                label = int(player_vals_df['boost_collect'].at[idx])
+                boost_pad = [boost_pad for boost_pad in proto_game.game_stats.boost_pads if boost_pad.label == label][0]
+                if np.isnan(data_frame['ball']['vel_x'].at[idx]):
+                    # boost pickups after a goal is scored
+                    continue
+                seconds = data_frame['game']['seconds_remaining'].at[idx]
+                if 'is_overtime' in data_frame['game'] and data_frame['game']['is_overtime'].at[idx]:
+                    seconds *= -1
+                boost_pad.pickups.add(
+                    player_id = player.id,
+                    frame_number = idx,
+                    seconds_remaining = 0 if np.isnan(seconds) else int(seconds)
+                )
+
         return
 
     @classmethod
@@ -59,9 +88,8 @@ class PickupAnalysis:
         # Get the index of the frame we most recently entered a pad range, per frame.
         df['recent_entry_index'] = df.index
         df.loc[df['status_change'] <= 0, 'recent_entry_index'] = 0
-        df['recent_entry_index'] = df['recent_entry_index'].replace(0, np.nan).fillna(
-            method='bfill', limit=cls.LAG_BACK).fillna(
-            method='ffill', limit=cls.LAG_FORWARD)
+        df['recent_entry_index'] = df['recent_entry_index'].replace(0, np.nan).bfill(limit=cls.LAG_BACK).ffill(
+            limit=cls.LAG_FORWARD)
         gains_frames = df.loc[
             ((df['gains'] > 5) & (df['boost'] != 33.33333)) | ((df['gains'] > 0) & (df['boost'] > 95.0))].copy()
 

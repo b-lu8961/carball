@@ -36,7 +36,8 @@ class GoalStats(BaseStat):
                 blue_goals += 1
 
             game_data = data_frame.loc[frame_num, ('game')]
-            goal.seconds_remaining = int(game_data["seconds_remaining"])
+            game_secs = game_data['seconds_remaining']
+            goal.seconds_remaining = 0 if np.isnan(game_secs) else int(game_data["seconds_remaining"])
             if "is_overtime" in game_data.keys() and game_data["is_overtime"]:
                 goal.seconds_remaining *= -1
             

@@ -201,7 +201,10 @@ class AnalysisManager:
 
         self._get_game_time(proto_game, data_frame)
         if clean:
-            clean_replay(game, data_frame, proto_game, player_map)
+            num_removed = clean_replay(game, data_frame, proto_game, player_map)
+            if num_removed != 0:
+                return
+
         self._log_time("Creating events...")
         self.events_creator.create_events(game, proto_game, player_map, data_frame, kickoff_frames, first_touch_frames,
                                           calculate_intensive_events=calculate_intensive_events)

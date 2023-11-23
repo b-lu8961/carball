@@ -17,7 +17,7 @@ STANDARD_GOAL_WIDTH_HALF = 893
 BALL_SIZE = 92.75
 HEIGHT_0_BALL_LIM = 95  # Height of ball when on ground
 HEIGHT_0_LIM = 20  # Height of car when on ground
-HEIGHT_1_LIM = 840  # Goal height
+HEIGHT_1_LIM = 642.775  # Goal height
 
 MAP_THIRD = MAP_Y / 6
 
@@ -53,12 +53,12 @@ class FieldConstants:
             field_type = self.field_type
         if field_type == FieldType.STANDARD:
             return np.array([
-                (3072, -4096, 50),
                 (-3072, -4096, 40),
-                (3584, 0, 190),
+                (3072, -4096, 50),
                 (-3584, 0, 160),
-                (3072, 4096, 300),
-                (-3072, 4096, 310)])
+                (3584, 0, 190),
+                (-3072, 4096, 300),
+                (3072, 4096, 310)])
         else:
             raise NotImplementedError
 
@@ -70,7 +70,7 @@ class FieldConstants:
                 (0.0, -4240.0, 1),
                 (-1792.0, -4184.0, 2),
                 (1792.0, -4184.0, 3),
-                (- 940.0, -3308.0, 6),
+                (-940.0, -3308.0, 6),
                 (940.0, -3308.0, 7),
                 (0.0, -2816.0, 8),
                 (-3584.0, -2484.0, 9),
@@ -90,7 +90,7 @@ class FieldConstants:
                 (-3584.0, 2484.0, 25),
                 (3584.0, 2484.0, 26),
                 (0.0, 2816.0, 27),
-                (- 940.0, 3310.0, 28),
+                (-940.0, 3310.0, 28),
                 (940.0, 3308.0, 29),
                 (-1792.0, 4184.0, 32),
                 (1792.0, 4184.0, 33),
@@ -122,13 +122,19 @@ class FieldConstants:
     def get_height_0_ball(self, player_data_frame, **kwargs):
         return player_data_frame.pos_z < HEIGHT_0_BALL_LIM
 
-    def get_height_1(self, player_data_frame, **kwargs):
+    def get_height_1_airtime(self, player_data_frame, **kwargs):
         return (HEIGHT_0_LIM < player_data_frame.pos_z) & (player_data_frame.pos_z < HEIGHT_1_LIM) \
                & (player_data_frame.pos_x.abs() < self.on_wall[0]) & (player_data_frame.pos_y.abs() < self.on_wall[1])
+    
+    def get_height_1(self, player_data_frame, **kwargs):
+        return (HEIGHT_0_LIM < player_data_frame.pos_z) & (player_data_frame.pos_z < HEIGHT_1_LIM)
 
-    def get_height_2(self, player_data_frame, **kwargs):
+    def get_height_2_airtime(self, player_data_frame, **kwargs):
         return (player_data_frame.pos_z > HEIGHT_1_LIM) \
                & (player_data_frame.pos_x.abs() < self.on_wall[0]) & (player_data_frame.pos_y.abs() < self.on_wall[1])
+    
+    def get_height_2(self, player_data_frame, **kwargs):
+        return (player_data_frame.pos_z > HEIGHT_1_LIM)
 
     def get_ball_0(self, player_data_frame, ball_data_frame):
         """Ball is closer to goal 0 than player"""

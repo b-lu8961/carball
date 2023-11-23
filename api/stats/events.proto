@@ -3,7 +3,6 @@ syntax = "proto2";
 import "api/player_id.proto";
 import "api/stats/stats.proto";
 import "api/stats/rumble.proto";
-import "api/team.proto";
 
 package api.stats;
 
@@ -63,11 +62,19 @@ message Hit {
     optional bool match_save = 28;
     optional bool match_shot = 29;
 
+    optional sint32 seconds_remaining = 30;
+
     // pseudo stats
     // is_turnover = !(goal || dribble || pass)
 
     // DEPRECATED STATS
     optional bool DEPRECATED_field_goal_number = 11;
+}
+
+message BoostPickup {
+    optional api.PlayerId player_id = 1;
+    optional int32 frame_number = 2;
+    optional int32 seconds_remaining = 3;
 }
 
 // Not Implemented

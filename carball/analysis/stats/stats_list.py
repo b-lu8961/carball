@@ -33,15 +33,14 @@ class StatsList:
     @staticmethod
     def get_player_stats() -> List[BaseStat]:
         """These are stats that end up being assigned to a specific player"""
-        return [#BoostStat(),
+        return [BoostStat(),
                 PositionalTendencies(),
                 #Averages(),
                 #BallDistanceStat(),
                 #ControlsStat(),
-                #SpeedTendencies(),
+                SpeedTendencies(),
                 #CarryStat(),
                 #PerPossessionStat(),
-                #SpeedTendencies(),
                 #RumbleItemStat(),
                 #KickoffStat(),
                 #DropshotStats(),

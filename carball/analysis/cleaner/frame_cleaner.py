@@ -22,13 +22,15 @@ def remove_invalid_players(game: Game, data_frame: pd.DataFrame, proto_game: gam
     # Get invalid players; if none - return.
     invalid_players = get_invalid_players(proto_game, data_frame)
     if len(invalid_players) == 0:
-        return
+        return 0
 
     # Remove player from Game and game_pb2.Game
     game.players = [player for player in game.players if player.name not in invalid_players]
-    remove_player_from_protobuf(proto_game, player_map, invalid_players)
+    #remove_player_from_protobuf(proto_game, player_map, invalid_players)
 
-    logger.warning("Invalid player(s) removed: " + str(invalid_players))
+    logger.warning("Analysis stopping, invalid player(s) found: " + str(invalid_players))
+
+    return len(invalid_players)
 
 
 def get_invalid_players(proto_game: game_pb2.Game, data_frame: pd.DataFrame):

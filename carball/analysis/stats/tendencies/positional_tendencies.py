@@ -19,7 +19,9 @@ class PositionalTendencies(BaseStat):
         self.field_constants = FieldConstants()
         self.map_player_attributes_to_predicates = {
             "height_0": self.field_constants.get_height_0,
+            "height_1_air": self.field_constants.get_height_1_airtime,
             "height_1": self.field_constants.get_height_1,
+            "height_2_air": self.field_constants.get_height_2_airtime,
             "height_2": self.field_constants.get_height_2,
             "half_0": self.field_constants.get_half_0,
             "half_1": self.field_constants.get_half_1,
@@ -35,7 +37,9 @@ class PositionalTendencies(BaseStat):
 
         self.map_ball_attributes_to_predicates = {
             "height_0": self.field_constants.get_height_0_ball,
+            "height_1_air": self.field_constants.get_height_1_airtime,
             "height_1": self.field_constants.get_height_1,
+            "height_2_air": self.field_constants.get_height_2_airtime,
             "height_2": self.field_constants.get_height_2,
             "half_0": self.field_constants.get_half_0,
             "half_1": self.field_constants.get_half_1,
@@ -112,7 +116,8 @@ class PositionalTendencies(BaseStat):
         return new_dataframes
 
     @staticmethod
-    def set_tendency_proto(proto: stats_pb2.PositionalTendencies, height_0: float, height_1: float, height_2: float,
+    def set_tendency_proto(proto: stats_pb2.PositionalTendencies, height_0: float, height_1_air: float, height_1: float, 
+                           height_2_air: float, height_2: float,
                            half_0: float, half_1: float,
                            third_0: float, third_1: float, third_2: float,
                            ball_0: float, ball_1: float,
@@ -121,8 +126,10 @@ class PositionalTendencies(BaseStat):
         """
         :param proto: What object everything is getting set on
         :param height_0: Time spent on ground
-        :param height_1: Time spent low in air
-        :param height_2: Time spent high in air
+        :param height_1_air: Time spent low in air
+        :param height_1: Time spent above ground, below crossbar height
+        :param height_2_air: Time spent high in air
+        :param height_2: Time spent above crossbar height
         :param half_0: Time spent in defending half
         :param half_1: Time spent in attacking half
         :param third_0: Time spent in defending third
@@ -135,8 +142,10 @@ class PositionalTendencies(BaseStat):
         :param corner: Time spent near the corner
         """
         proto.time_on_ground = height_0
-        proto.time_low_in_air = height_1
-        proto.time_high_in_air = height_2
+        proto.time_low_in_air = height_1_air
+        proto.time_low = height_1
+        proto.time_high_in_air = height_2_air
+        proto.time_high = height_2
         proto.time_in_defending_half = half_0
         proto.time_in_attacking_half = half_1
         proto.time_in_defending_third = third_0

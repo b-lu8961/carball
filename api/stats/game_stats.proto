@@ -4,6 +4,7 @@ import "api/stats/events.proto";
 import "api/stats/ball_stats.proto";
 import "api/stats/kickoff.proto";
 import "api/stats/dropshot.proto";
+import "api/stats/boostpad.proto";
 package api.stats;
 
 
@@ -18,4 +19,5 @@ message GameStats {
     repeated api.stats.BallCarry ball_carries = 8;
     optional api.stats.DropshotGameStats dropshot_stats = 9;
     repeated api.stats.FiftyFifty fifty_fifties = 10;
+    repeated api.stats.BoostPad boost_pads = 11;
 }
