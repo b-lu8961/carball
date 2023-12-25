@@ -42,11 +42,12 @@ def draw_field(team_name, game_list):
             continue
 
         team_is_orange = [team.is_orange for team in game.teams if team.name == team_name][0]
+        #team_is_orange = False
         goal_color = constants.BLUE_COLORS if team_is_orange else constants.ORANGE_COLORS
         save_color = constants.ORANGE_COLORS if team_is_orange else constants.BLUE_COLORS
 
         gp += 1
-        team_ids = [player.id.id for player in game.players if player.team_name == team_name]
+        team_ids = [player.id.id for player in game.players if player.is_orange == team_is_orange]
         save_list = [hit for hit in game.game_stats.hits if hit.match_save and hit.player_id.id in team_ids]
         shot_frames = []
         for save in save_list:
@@ -123,11 +124,11 @@ def create_image(team_name: str, game_list, config):
     draw.ellipse([
             (goal_img_width + p1[0] - detail_size, get_y(detail_y - p1[1] + detail_size, IMAGE_Y)), 
             (goal_img_width + p1[0] + detail_size, get_y(detail_y - p1[1] - detail_size, IMAGE_Y))
-        ], outline=constants.ORANGE_COLORS[0], width=4)
+        ], outline=constants.BLUE_COLORS[0], width=4)
     draw.ellipse([
             (goal_img_width + p2[0] - detail_size, get_y(detail_y - p2[1] + detail_size, IMAGE_Y)), 
             (goal_img_width + p2[0] + detail_size, get_y(detail_y - p2[1] - detail_size, IMAGE_Y))
-        ], fill=constants.BLUE_COLORS[0])
+        ], fill=constants.ORANGE_COLORS[0])
 
     draw.multiline_text((goal_img_width + (2 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)), 
         f"{counts[0]}\n\n\n\n{counts[1]}\n\n\n\n{counts[2]}\n\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
@@ -148,19 +149,19 @@ def create_image(team_name: str, game_list, config):
 
 
 def main():
-    team_name = "ATOMIK"
-    key = "SPAIN"
+    team_name = "SPACESTATION"
+    key = "SPACESTATION"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": "ATOMIK",
-        "t2": "SALT MINE 3 - EU | STAGE 2 | GROUP B",
-        "t3": "RW9 3 - 1 ATOMIK",
+        "t1": key,
+        "t2": "CHICAGO | HOCKSER | LJ",
+        "t3": "OXG HOLIDAY INVITATIONAL | UBR1",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("Salt Mine 3", "saves", f"{team_name.lower()}_saves.png")
+        "img_name": os.path.join("OXG Holiday Inv", "saves", f"{team_name.lower()}_saves.png")
     }
 
-    data_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - EU", "Groups", "Group B", "RW9 VS ATOMIK")
+    data_path = os.path.join("replays", "OXG Inv", "R1 - SSG vs TZ")
     game_iter = utils.read_series_data(data_path)
     create_image(team_name, game_iter, config)
     

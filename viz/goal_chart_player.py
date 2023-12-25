@@ -1,7 +1,7 @@
 from viz import constants, utils
 
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 IMAGE_X, IMAGE_Y = 2600, 925
 MARGIN = 40
@@ -48,7 +48,7 @@ def draw_goal(player_name, game_list):
             else:
                 marker_color = constants.BLUE_COLORS
             if goal.is_go_ahead:
-                draw_marker(draw, goal.ball_pos, "C", height,  fill=marker_color[0])
+                draw_marker(draw, goal.ball_pos, "C", height, fill=marker_color[0])
                 go_ahead += 1
             elif goal.is_tying:
                 draw_marker(draw, goal.ball_pos, "C", height, outline=marker_color[2], width=3)

@@ -1,9 +1,9 @@
 from viz import constants, utils
 
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
-IMAGE_X, IMAGE_Y = 2600, 1100
+IMAGE_X, IMAGE_Y = 2600, 1050
 MARGIN = 40
 
 MARKER_SIZE = 20
@@ -16,7 +16,7 @@ def get_y(val, img_height):
 
 def draw_marker(draw, pos, mark_type, img_height, size=MARKER_SIZE, outline=None, fill=None, width=2):
     base_x = MID_X + pos.pos_x
-    base_y = MARGIN + pos.pos_z
+    base_y = pos.pos_z
     if mark_type == "C":
         draw.ellipse([(base_x - size, get_y(base_y + size, img_height)), (base_x + size, get_y(base_y - size, img_height))], 
             outline=outline, fill=fill, width=width)
@@ -27,18 +27,16 @@ def draw_marker(draw, pos, mark_type, img_height, size=MARKER_SIZE, outline=None
         draw.regular_polygon((base_x, get_y(base_y, img_height), size + 5), 3, 
             outline=outline, fill=fill, width=width, rotation=60)
 
-def draw_goal(team_name, data_path):
-    width, height = constants.GOAL_X + (MARGIN * 4), round(constants.GOAL_Z) + (MARGIN * 2)
+def draw_goal(team_name, game_list):
+    width, height = constants.GOAL_X + (MARGIN * 4), round(constants.GOAL_Z - 80) + (MARGIN * 2)
     img = Image.new(mode="RGBA", size = (width, height), color=WHITE)
     
     draw = ImageDraw.Draw(img)
     utils.draw_goal_lines(draw, MARGIN, height)
-    
-    game_iter = utils.read_group_data(data_path)
 
     gp, solo, assisted, total = 0, 0, 0, 0
     player_map = {}
-    for game in game_iter:
+    for game in game_list:
         active_teams = [team.name for team in game.teams]
         if team_name not in active_teams:
             continue
@@ -67,7 +65,12 @@ def draw_goal(team_name, data_path):
             else:
                 outline = BLACK if goal.assister == "" else team_color[2]
                 draw_marker(draw, goal.ball_pos, "T", height, outline=outline, fill=team_color[2], width=width)
-
+    
+    if len(player_map.keys()) != 3:
+        players = [p.name for p in game.players if p.team_name == team_name]
+        for p in players:
+            if p not in player_map:
+                player_map[p] = len(player_map.keys())
     players = (
         [key for key, val in player_map.items() if val == 0][0],
         [key for key, val in player_map.items() if val == 1][0],
@@ -76,7 +79,7 @@ def draw_goal(team_name, data_path):
     return img, (gp, solo, assisted, total), players, team_color
   
 
-def create_image(team_name: str, data_path: str, config):
+def create_image(team_name: str, game_list, config):
     img = Image.new(mode = "RGBA", size = (IMAGE_X, IMAGE_Y), color = WHITE)
     draw = ImageDraw.Draw(img)
     
@@ -87,7 +90,7 @@ def create_image(team_name: str, data_path: str, config):
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Main goal image
-    goal_image, counts, players, team_color = draw_goal(team_name, data_path)
+    goal_image, counts, players, team_color = draw_goal(team_name, game_list)
     goal_img_width, goal_img_height = goal_image.width, goal_image.height
     img.paste(goal_image, (MARGIN, get_y(goal_image.height + MARGIN, IMAGE_Y)))
 
@@ -122,37 +125,40 @@ def create_image(team_name: str, data_path: str, config):
         fill=team_color[1], rotation=60)
     
     # Detail text on right
-    padding = 109 if counts[2] < 10 else 113
+    padding = 97 if max(counts) < 10 else 113
     draw.ellipse([
-            (goal_img_width + padding - 50, get_y(goal_img_height - 382 + 50, IMAGE_Y)), 
-            (goal_img_width + padding + 50, get_y(goal_img_height - 382 - 50, IMAGE_Y))
+            (goal_img_width + padding - 50, get_y(goal_img_height - 382 + 70, IMAGE_Y)), 
+            (goal_img_width + padding + 50, get_y(goal_img_height - 382 - 30, IMAGE_Y))
         ], outline=BLACK, width=4)
 
-    draw.multiline_text((goal_img_width + (2 * MARGIN), get_y(goal_img_height - MARGIN, IMAGE_Y)), 
+    draw.multiline_text((goal_img_width + (2 * MARGIN), get_y(goal_img_height - (0.5 * MARGIN), IMAGE_Y)), 
         f"{counts[0]}\n\n\n{counts[1]}\n\n\n{counts[2]}\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
     )
-    draw.multiline_text((goal_img_width + (5 * MARGIN), get_y(goal_img_height - MARGIN, IMAGE_Y)),
+    draw.multiline_text((goal_img_width + (5 * MARGIN), get_y(goal_img_height - (0.5 * MARGIN), IMAGE_Y)),
         "games played\n\n\nsolo goals\n\n\nassisted goals\n\n\ntotal goals", fill=(70,70,70), font=constants.BOUR_60
     )
     
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", "goals", config["img_name"]))
+    img.save(os.path.join("viz", "images", config["img_name"]))
 
 def main():
-    team_name = "TEAM VITALITY"
-    data_path = os.path.join("replays", "Playoffs")
+    team_name = "SHOPIFY"
+    key = "SHOPIFY REBELLION"
     config = {
-        "logo": "TEAM_VITALITY.png",
-        "t1": "TEAM VITALITY",
-        "t2": "ALPHA54 | RADOSIN | ZEN",
-        "t3": "GOAL PLACEMENT | WORLDS '23 - PLAYOFFS",
-        "c1": constants.TEAM_INFO[team_name]["c1"],
-        "c2": constants.TEAM_INFO[team_name]["c2"],
-        "img_name": "vitality_goals.png"
+        "logo": constants.TEAM_INFO[key]["logo"],
+        "t1": key,
+        "t2": "2PIECE | JUSTIN | PAARTH",
+        "t3": "GOAL PLACEMENT | OXG HOLIDAY INVITATIONAL | UBQF",
+        "c1": constants.TEAM_INFO[key]["c1"],
+        "c2": constants.TEAM_INFO[key]["c2"],
+        "img_name": os.path.join("OXG Holiday Inv", "goals", f"{key.lower()}_goals.png")
     }
-    create_image(team_name, data_path, config)
+
+    data_path = os.path.join("replays", "OXG Inv", "R2 - HB vs SR")
+    game_list = utils.read_series_data(data_path)
+    create_image(team_name, game_list, config)
     
     return 1
   

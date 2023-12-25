@@ -1,7 +1,7 @@
 from viz import constants, utils
 
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 IMAGE_X, IMAGE_Y = 2650, 1800
 MARGIN = 40
@@ -28,7 +28,7 @@ def draw_marker(draw, pos, mark_type, img_height, size=MARKER_SIZE, outline=None
         draw.chord([(base_x - size, get_y(base_y + size, img_height)), (base_x + size, get_y(base_y - size, img_height))], 
             90, 270, fill=BLACK)
 
-def draw_field(player_name, game_list):
+def draw_field(player_name, game_list, color_set):
     width, height = round(constants.MAP_Y) + (MARGIN * 4), round(constants.MAP_X) + (MARGIN * 2)
     img = Image.new(mode="RGBA", size = (width, height), color=WHITE)
     
@@ -58,61 +58,60 @@ def draw_field(player_name, game_list):
                 shots += 1
                 if hit.match_goal:
                     goals += 1
-                    draw_marker(draw, hit.ball_data, "C", height, size, fill=constants.BLUE_COLORS[0])
+                    draw_marker(draw, hit.ball_data, "C", height, size, fill=color_set[0])
                 else:
-                    draw_marker(draw, hit.ball_data, "C", height, size, outline=constants.BLUE_COLORS[2], width=4)
+                    draw_marker(draw, hit.ball_data, "C", height, size, outline=color_set[2], width=4)
             else:
                 # Some goals are not shots
                 if hit.match_goal:
                     goals += 1
-                    draw_marker(draw, hit.ball_data, "C", height, size, fill=constants.BLUE_COLORS[0])
+                    draw_marker(draw, hit.ball_data, "C", height, size, fill=color_set[0])
     
     return img, (gp, shots, goals, round(100 * (goals / shots), 1))
 
-def create_image(player_name, game_list, config):
+def create_image(player_name, game_list, config, color_set):
     img = Image.new(mode = "RGBA", size = (IMAGE_X, IMAGE_Y), color = WHITE)
     draw = ImageDraw.Draw(img)
     
     # Logo in top left
     logo_width, _ = utils.draw_team_logo(img, MARGIN, config["logo"])
 
-    # Main field image
-    goal_image, counts = draw_field(player_name, game_list)
-    goal_img_width, goal_img_height = goal_image.width, goal_image.height
-    img.paste(goal_image, (MARGIN, get_y(goal_image.height + MARGIN, IMAGE_Y)))
-
     # Title text
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
+
+    # Main field image
+    field_img, counts = draw_field(player_name, game_list, color_set)
+    img.paste(field_img, (MARGIN, get_y(field_img.height + MARGIN, IMAGE_Y)))
 
     # Attack direction text
     attack_text = "Attacking Direction"
     attack_len = draw.textlength(attack_text, font=constants.BOUR_50)
-    draw.text((MID_X - (attack_len / 2) + MARGIN, get_y(goal_img_height + (1.5 * MARGIN), IMAGE_Y)), 
+    draw.text((MID_X - (attack_len / 2) + MARGIN, get_y(field_img.height + (1.5 * MARGIN), IMAGE_Y)), 
         f"{attack_text} >>", fill=DARK_GREY, font=constants.BOUR_50)
     
     # Detail text on right
-    detail_y = goal_img_height - (4 * MARGIN)
+    detail_y = field_img.height - (4 * MARGIN)
     p1 = (147, 238)
     p2 = (147, 446)
     detail_size = 60
 
     draw.ellipse([
-            (goal_img_width + p1[0] - detail_size, get_y(detail_y - p1[1] + detail_size, IMAGE_Y)), 
-            (goal_img_width + p1[0] + detail_size, get_y(detail_y - p1[1] - detail_size, IMAGE_Y))
-        ], outline=constants.BLUE_COLORS[2], width=4)
+            (field_img.width + p1[0] - detail_size, get_y(detail_y - p1[1] + detail_size, IMAGE_Y)), 
+            (field_img.width + p1[0] + detail_size, get_y(detail_y - p1[1] - detail_size, IMAGE_Y))
+        ], outline=color_set[2], width=4)
     draw.ellipse([
-            (goal_img_width + p2[0] - detail_size, get_y(detail_y - p2[1] + detail_size, IMAGE_Y)), 
-            (goal_img_width + p2[0] + detail_size, get_y(detail_y - p2[1] - detail_size, IMAGE_Y))
-        ], fill=constants.BLUE_COLORS[0])
-    draw.multiline_text((goal_img_width + (2 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)), 
+            (field_img.width + p2[0] - detail_size, get_y(detail_y - p2[1] + detail_size, IMAGE_Y)), 
+            (field_img.width + p2[0] + detail_size, get_y(detail_y - p2[1] - detail_size, IMAGE_Y))
+        ], fill=color_set[0])
+    draw.multiline_text((field_img.width + (2 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)), 
         f"{counts[0]}\n\n\n\n{counts[1]}\n\n\n\n{counts[2]}\n\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
     )
-    draw.multiline_text((goal_img_width + (6 * MARGIN), get_y(detail_y, IMAGE_Y)),
+    draw.multiline_text((field_img.width + (6 * MARGIN), get_y(detail_y, IMAGE_Y)),
         "games played\n\n\n\nshots\n\n\n\ngoals\n\n\n\nshooting %", fill=DARK_GREY, font=constants.BOUR_60
     )
 
     # Legend below detail text
-    bbox = draw.multiline_textbbox((goal_img_width + (6 * MARGIN), get_y(detail_y, IMAGE_Y)),
+    bbox = draw.multiline_textbbox((field_img.width + (6 * MARGIN), get_y(detail_y, IMAGE_Y)),
         "games played\n\n\n\nshots\n\n\n\ngoals\n\n\n\nshooting %", font=constants.BOUR_60)
     utils.draw_height_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, constants.BOUR_40)
     
@@ -122,20 +121,21 @@ def create_image(player_name, game_list, config):
     img.save(os.path.join("viz", "images", config["img_name"]))
 
 def main():
-    player_name = "Firstkiller"
-    data_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - NA", "Groups", "Group A", "FIRSTKILLER VS DIAZ")
+    player_name = "Little dIAZ^^"
+    key = "BRAZIL"
+    data_path = os.path.join("replays", "Salt Mine 3", "Finals", "Region - NA", "UBSF - FIRSTKILLER VS DIAZ")
     game_list = utils.read_series_data(data_path)
     #game_list = utils.read_group_data(data_path)
     config = {
-        "logo": "usa.png",
-        "t1": "FIRSTKILLER",
-        "t2": "SALT MINE 3 - NA | STAGE 2 | GROUP A",
+        "logo": constants.TEAM_INFO[key]["logo"],
+        "t1": "DIAZ",
+        "t2": "SALT MINE 3 - NA | FINALS | UBSF",
         "t3": "FIRSTKILLER 2 - 3 DIAZ",
-        "c1": constants.TEAM_INFO["USA"]["c1"],
-        "c2": constants.TEAM_INFO["USA"]["c2"],
-        "img_name": os.path.join("Salt Mine 3", "shots", "firstkiller_shots.png")
+        "c1": constants.TEAM_INFO[key]["c1"],
+        "c2": constants.TEAM_INFO[key]["c2"],
+        "img_name": os.path.join("Salt Mine 3", "shots", "diaz_shots.png")
     }
-    create_image(player_name, game_list, config)
+    create_image(player_name, game_list, config, constants.ORANGE_COLORS)
     
     return 1
   

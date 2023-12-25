@@ -127,16 +127,6 @@ def draw_dotted_circle(draw, img_width, margin, color_one, color_two):
     draw.text((img_width - circle_length - (2 * margin), 0), "\u25cc", fill=color_one, font=segoe)
     draw.text((img_width - (2 * margin), 13), "\u031a", fill=color_two, font=segoe)
 
-def draw_goal_lines(draw, margin, height):
-    ball_pad = 70
-    draw.line([
-        ((2 * margin) + ball_pad, get_y(ball_pad, height)), 
-        ((2 * margin) + ball_pad, get_y(constants.GOAL_Z - ball_pad, height)), 
-        ((2 * margin) + constants.GOAL_X - ball_pad, get_y(constants.GOAL_Z - ball_pad, height)), 
-        ((2 * margin) + constants.GOAL_X - ball_pad, get_y(ball_pad, height))
-    ], fill=(70,70,70), width=6, joint="curve")
-    draw.line([(margin, get_y(ball_pad, height)), ((3 * margin) + constants.GOAL_X, get_y(ball_pad, height))], fill=(140,140,140), width=2)
-
 def linedashed(draw, fill, width, x0, x1, y0, y1, dashlen=15, ratio=3): 
     dx=x1 - x0 # delta x
     dy=y1 - y0 # delta y
@@ -157,6 +147,36 @@ def linedashed(draw, fill, width, x0, x1, y0, y1, dashlen=15, ratio=3):
             a1 = vlen
         draw.line((x0 + (xa * a0), y0 + (ya * a0), x0 + (xa * a1), y0 + (ya * a1)), fill=fill, width=width)
         a0 += step 
+
+def draw_goal_lines(draw, margin, height, sections=False):
+    ball_pad = 70
+    goal_height = constants.GOAL_Z - (2 * ball_pad)
+    goal_width = constants.GOAL_X - (2 * ball_pad)
+    draw.line([
+        ((2 * margin) + ball_pad, get_y(ball_pad, height)), 
+        ((2 * margin) + ball_pad, get_y(constants.GOAL_Z - ball_pad, height)), 
+        ((2 * margin) + constants.GOAL_X - ball_pad, get_y(constants.GOAL_Z - ball_pad, height)), 
+        ((2 * margin) + constants.GOAL_X - ball_pad, get_y(ball_pad, height))
+    ], fill=(70,70,70), width=6, joint="curve")
+    draw.line([(margin, get_y(ball_pad, height)), ((3 * margin) + constants.GOAL_X, get_y(ball_pad, height))], fill=(140,140,140), width=2)
+
+    if sections:
+        linedashed(draw, (0,0,0), 3, 
+            (2 * margin + ball_pad), (2 * margin) + constants.GOAL_X - ball_pad,
+            get_y(ball_pad + (goal_height / 3), height), get_y(ball_pad + (goal_height / 3), height)
+        )
+        linedashed(draw, (0,0,0), 3, 
+            (2 * margin + ball_pad), (2 * margin) + constants.GOAL_X - ball_pad,
+            get_y(ball_pad + ((2 * goal_height) / 3), height), get_y(ball_pad + ((2 * goal_height) / 3), height)
+        )
+        linedashed(draw, (0,0,0), 3, 
+            (2 * margin) + ball_pad + (goal_width / 3), (2 * margin) + ball_pad + (goal_width / 3),
+            get_y(ball_pad + goal_height, height), get_y(ball_pad, height)
+        )
+        linedashed(draw, (0,0,0), 3, 
+            (2 * margin) + ball_pad + ((2 * goal_width) / 3), (2 * margin) + ball_pad + ((2 * goal_width) / 3),
+            get_y(ball_pad + goal_height, height), get_y(ball_pad, height)
+        )
 
 def draw_field_lines(draw, margin, height, sections=False):
     mid_x, mid_y = (constants.MAP_Y + (margin * 4)) / 2, (constants.MAP_X + (margin * 2)) / 2
