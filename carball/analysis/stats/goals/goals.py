@@ -56,7 +56,36 @@ class GoalStats(BaseStat):
             goal.ball_vel.pos_y = vel_data[1]
             goal.ball_vel.pos_z = vel_data[2]
             
+            start_sign = np.sign(goal.ball_pos.pos_y)
+            curr_frame = goal.frame_number
+            off_half_time = 0
+            while np.sign(data_frame['ball']['pos_y'].at[curr_frame]) == start_sign:
+                curr_frame -= 1
+                off_half_time += data_frame['game', 'delta'].at[curr_frame]
+            goal.time_in_off_half = round(off_half_time, 3)
+
+            num_touches = 0
+            team_touches = [hit for hit in proto_game.game_stats.hits if player_map[hit.player_id.id].is_orange == goal.is_orange\
+                        and hit.frame_number <= goal.frame_number]
+            if len(team_touches) == 0:
+                goal.cons_team_touches = num_touches
+                continue
+            curr_touch = team_touches[-1]
+            while player_map[curr_touch.player_id.id].is_orange == goal.is_orange:
+                num_touches += 1
+                prev_hit_frame = curr_touch.previous_hit_frame_number
+                if prev_hit_frame == 0:
+                    break
+                curr_touch = [hit for hit in proto_game.game_stats.hits if hit.frame_number == prev_hit_frame][0]
+            goal.cons_team_touches = num_touches
+
+            ko_hit = [hit for hit in proto_game.game_stats.hits if hit.previous_hit_frame_number == 0 \
+                and hit.frame_number < goal.frame_number][-1]
+            goal.time_after_kickoff = round(data_frame['game', 'delta'].loc[ko_hit.frame_number:goal.frame_number].sum(), 3)
+
             goal_hit = self.get_goal_hit(proto_game, goal)
+            if goal_hit is None:
+                continue
             if goal_hit.assisted:
                 assister_id = self.get_assister_id(proto_game, goal_hit)
                 assister = player_map[assister_id]
@@ -76,7 +105,7 @@ class GoalStats(BaseStat):
 
     @staticmethod
     def get_goal_hit(proto_game, goal):
-        goal_hits = [hit for hit in proto_game.game_stats.hits if hit.goal]
+        goal_hits = [hit for hit in proto_game.game_stats.hits if hit.match_goal]
         for i in range(len(goal_hits) - 1, -1, -1):
             if goal_hits[i].frame_number < goal.frame_number:
                 return goal_hits[i]

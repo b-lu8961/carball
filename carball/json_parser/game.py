@@ -236,7 +236,7 @@ class Game:
         self.ball = pd.DataFrame.from_dict(self.all_data['player_ball_data']['ball'], orient='index')
 
         # FRAMES
-        self.frames = pd.DataFrame.from_dict(self.all_data['frames_data'], orient='index')
+        self.frames = pd.DataFrame.from_dict(self.all_data['frames_data'], orient='index').sort_index()
 
         # DEMOS
         self.demos = []

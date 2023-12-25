@@ -50,6 +50,9 @@ message Goal {
     optional string team_name = 10;
     optional bool is_orange = 11;
     optional sint32 seconds_remaining = 12;
+    optional int32 cons_team_touches = 13;
+    optional float time_in_off_half = 14;
+    optional float time_after_kickoff = 15;
 }
 
 message Demo {

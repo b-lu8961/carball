@@ -253,7 +253,7 @@ class AnalysisManager:
         for player in protobuf_game.players:
             try:
                 player.time_in_game = data_frame[
-                    data_frame[player.name].pos_x.notnull() & data_frame.game.goal_number.notnull()].game.delta.sum()
+                    data_frame[player.name].pos_x.notnull() & data_frame.ball.vel_x.notnull()].game.delta.sum()
                 player.first_frame_in_game = data_frame[player.name].pos_x.first_valid_index()
             except:
                 player.time_in_game = 0
@@ -306,9 +306,11 @@ class AnalysisManager:
         :param data_frame: The game's pandas.DataFrame object (refer to comment in get_data_frame() for more info).
         :param player_map: The dictionary with all player IDs matched to the player objects.
         """
-
-        goal_frames = data_frame.game.goal_number.notnull()
-        self.stats_manager.get_stats(game, proto_game, player_map, data_frame[goal_frames])
+        if data_frame['game']['ball_has_been_hit'].at[1]:
+            self.stats_manager.get_stats(game, proto_game, player_map, data_frame)
+        else:
+            goal_frames = data_frame.game.goal_number.notnull()
+            self.stats_manager.get_stats(game, proto_game, player_map, data_frame[goal_frames])
 
     def _store_frames(self, data_frame: pd.DataFrame):
         self.data_frame = data_frame

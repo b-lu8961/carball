@@ -28,8 +28,10 @@ class SaltieGame:
             hit_team_no_dataframe = pd.concat([hit_team_no, last_hit_team_no], axis=1)
             kickoff_frames = hit_team_no_dataframe[~(hit_team_no_dataframe['hit_team_no'].isnull()) &
                                                    (hit_team_no_dataframe['last_hit_team_no'].isnull())]
-
-        return kickoff_frames.index.values
+        if game.frames.loc[1, 'ball_has_been_hit']:
+            return kickoff_frames.index.values[1:]
+        else:
+            return kickoff_frames.index.values
 
     @staticmethod
     def get_kickoff_frames(game):
@@ -95,4 +97,4 @@ class SaltieGame:
             else:
                 cols.append(c)
         data_frame.columns = pd.MultiIndex.from_tuples(cols)
-        return data_frame
+        return data_frame.sort_index()

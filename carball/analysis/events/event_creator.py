@@ -141,8 +141,15 @@ class EventsCreator:
                 curr_player_hit = None if len(hit_list) == 0 else hit_list[-1]
                 
                 team_player_ids = [player.id.id for player in proto_game.players if player.is_orange == curr_player.is_orange]
-                last_team_hit = [hit for hit in proto_game.game_stats.hits if 
-                    (hit.frame_number <= idx) and (hit.player_id.id in team_player_ids)][-1]
+                last_team_hit_list = [hit for hit in proto_game.game_stats.hits if 
+                    (hit.frame_number <= idx) and (hit.player_id.id in team_player_ids)]
+                last_team_hit = None if len(last_team_hit_list) == 0 else last_team_hit_list[-1]
+                
+                if curr_player_hit is None and last_team_hit is None:
+                    recent_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number <= idx][-1]
+                    new_hit_frame = recent_hit.frame_number - 1 if idx == recent_hit.frame_number else recent_hit.frame_number + 1
+                    self.insert_hit(proto_game, data_frame, hits, new_hit_frame, curr_player, collision_distances)
+                    continue
 
                 if curr_player_hit is None or ((last_team_hit.player_id.id != curr_player.id.id) and \
                         (last_team_hit.frame_number - curr_player_hit.frame_number) >= 75):
@@ -152,7 +159,8 @@ class EventsCreator:
                         # curr player had 50-50 with opponent, hit needs to be added
                         recent_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number <= idx][-1]
                         # Insert new hit after recent_hit
-                        self.insert_hit(proto_game, data_frame, hits, recent_hit.frame_number + 1, curr_player, collision_distances)
+                        new_hit_frame = recent_hit.frame_number - 1 if idx == recent_hit.frame_number else recent_hit.frame_number + 1
+                        self.insert_hit(proto_game, data_frame, hits, new_hit_frame, curr_player, collision_distances)
                     else:
                         # Hit by teammate actually belongs to curr player
                         last_team_hit.player_id.id = curr_player.id.id
@@ -163,6 +171,8 @@ class EventsCreator:
         for name in indices.keys():
             curr_player = [player for player in proto_game.players if player.name == name][0]
             for stat_type in sb_cols:
+                if len(indices[name][stat_type]) == 0:
+                    continue
                 for stat_idx in indices[name][stat_type]:
                     hit_list = [hit for hit in proto_game.game_stats.hits if 
                         hit.frame_number <= stat_idx and hit.player_id.id == curr_player.id.id]
@@ -175,6 +185,10 @@ class EventsCreator:
                         stat_hit = self.insert_hit(proto_game, data_frame, hits, min_frame, curr_player, collision_distances)
                         
                     if stat_type == 'match_goals':
+                        if stat_hit.match_goal:
+                            recent_hit = [hit for hit in proto_game.game_stats.hits if 
+                                hit.frame_number <= stat_idx][-1]
+                            stat_hit = self.insert_hit(proto_game, data_frame, hits, recent_hit.frame_number + 1, curr_player, collision_distances)
                         stat_hit.match_goal = True
                     elif stat_type == 'match_saves':
                         stat_hit.match_save = True

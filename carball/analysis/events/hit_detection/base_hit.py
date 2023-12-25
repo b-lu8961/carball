@@ -213,8 +213,9 @@ class BaseHit:
     def get_hit_frame_numbers_by_ball_ang_vel(data_frame: pd.DataFrame) -> List[int]:
         if 'ang_vel_x' not in data_frame.ball:
             return []
-        ball_ang_vels = data_frame.ball.loc[:, ['ang_vel_x', 'ang_vel_y', 'ang_vel_z']]
-        diff_series = ball_ang_vels.diff().any(axis=1)
+        ball_ang_vels_pre = data_frame.ball.loc[:, ['ang_vel_x', 'ang_vel_y', 'ang_vel_z']]
+        ball_ang_vels = ball_ang_vels_pre.sort_index()
+        diff_series = (np.abs(ball_ang_vels.diff()) > 50).any(axis=1)
         diff_list = diff_series.index[diff_series].tolist()
         zeros = (ball_ang_vels == 0).all(axis=1)
         zero_list = zeros.index[zeros].tolist()
