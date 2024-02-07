@@ -113,7 +113,7 @@ def create_image(player_name, data_path, config):
     bbox = draw.multiline_textbbox((goal_img_width + (5 * MARGIN) + 10, get_y(detail_y, IMAGE_Y)),
         "games played\n\n\n\nbehind ball demos\n\n\n\nahead of ball demos\n\n\n\ntotal demos", font=constants.BOUR_60)
 
-    utils.draw_height_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, constants.BOUR_40)
+    utils.draw_circle_legend(draw, bbox[3], MARGIN, IMAGE_X, MARKER_SIZE, constants.BOUR_40)
 
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])

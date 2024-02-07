@@ -84,20 +84,43 @@ BOOSTING_SPEED = 1410
 
 ### Viz constants
 
-# Field line segment colors
-TOP_COLORS = ['black', 'black', 'black', 'orange', 'black', 'black', 
-              'black', 'black', 'black', 'blue', 'black', 'black']
-SIDE_COLORS = ['blue', 'black', 'black', 'black', 'orange']
-
 MARKERS = ['o', 's', 'x']
 # From ballchasing charts
 BLUE_COLORS = [(32, 156, 238), (21, 101, 192), (122, 64, 236)]
 ORANGE_COLORS = [(color[2], color[1], color[0]) for color in BLUE_COLORS]
 COLOR_MAP = {'blue': BLUE_COLORS, 'orange': ORANGE_COLORS}
 
+REGION_COLORS = {
+    "APAC": [(143, 0, 255), (103, 0, 255)],
+    "EU": [(78, 159, 216), (44, 131, 194)],
+    "MENA": [(0, 166, 79), (0, 123, 58)],
+    "NA": [(236, 114, 57), (211, 83, 20)],
+    "OCE": [(0, 235, 235), (0, 213, 213)],
+    "SAM": [(244, 214, 0), (225, 198, 0)],
+    "SSA": [(228, 20, 30), (188, 20, 30)],
+}
+
 TEAM_INFO = {
+    "DEFAULT": {
+        "logo": "default.png",
+        "c1": (3, 123, 213),
+        "c2": (165, 165, 165),
+        "c3": (255, 255, 255)
+    },
+    "FEARLESS": {
+        "logo": "default.png",
+        "c1": (3, 123, 213),
+        "c2": (165, 165, 165),
+        "c3": (255, 255, 255)
+    },
     # Events
     "RL ESPORTS": {
+        "logo": "RL_Esports.PNG",
+        "c1": (78, 159, 216),
+        "c2": (236, 114, 57),
+        "c3": (255, 255, 255)
+    },
+    "RLCS": {
         "logo": "RL_Esports.PNG",
         "c1": (78, 159, 216),
         "c2": (236, 114, 57),
@@ -202,23 +225,89 @@ TEAM_INFO = {
         "c3": (255, 255, 255)
     },
     "TEAM LIQUID": {
-        "logo": "",
-        "c1": (),
-        "c2": (),
-        "c3": ()
+        "logo": "team_liquid.png",
+        "c1": (0, 21, 56),
+        "c2": (16, 60, 123),
+        "c3": (255, 255, 255)
+    },
+    "GENTLEMATES": {
+        "logo": "gentlemates.png",
+        "c1": (236, 121, 224),
+        "c2": (197, 244, 77),
+        "c3": (56, 56, 56)
+    },
+    "ENDPOINT": {
+        "logo": "endpoint.png",
+        "c1": (0, 122, 255),
+        "c2": (111, 52, 141),
+        "c3": (29, 35, 47)
+    },
+    "OXYGEN ESPORTS": {
+        "logo": "oxygen.png",
+        "c1": (49, 181, 123),
+        "c2": (34, 34, 34),
+        "c3": (255, 255, 255)
+    },
+    "RESOLVE": {
+        "logo": "resolve.png",
+        "c1": (5, 48, 55),
+        "c2": (118, 188, 69),
+        "c3": (34, 31, 31)
     },
     # NA
-    "G2 ESPORTS": {
-        "logo": "",
-        "c1": (),
-        "c2": (),
-        "c3": ()
+    "DELETED XD": {
+        "logo": "deleted_xd.png",
+        "c1": (230, 207, 112),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
     },
-    "GENGMOBIL1": {
-        "logo": "",
-        "c1": (),
-        "c2": (),
-        "c3": ()
+    "DIGNITAS": {
+        "logo": "dignitas.png",
+        "c1": (255, 205, 0),
+        "c2": (15, 15, 15),
+        "c3": (255, 255, 255)
+    },
+    "G2 ESPORTS": {
+        "logo": "g2_esports.png",
+        "c1": (0, 0, 0),
+        "c2": (239, 61, 35),
+        "c3": (255, 255, 255)
+    },
+    "GEN G": {
+        "logo": "geng.png",
+        "c1": (165, 135, 33),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
+    },
+    "LUMINOSITY": {
+        "logo": "luminosity.png",
+        "c1": (8, 43, 68),
+        "c2": (60, 188, 220),
+        "c3": (255, 255, 255)
+    },
+    "M80": {
+        "logo": "m80.png",
+        "c1": (218, 255, 0),
+        "c2": (15, 21, 35),
+        "c3": (255, 255, 255)
+    },
+    "NRG": {
+        "logo": "nrg.png",
+        "c1": (0, 0, 0),
+        "c2": (255, 255, 255),
+        "c3": (255, 255, 255)
+    },
+    "OG": {
+        "logo": "og.webp",
+        "c1": (1, 37, 84),
+        "c2": (220, 188, 120),
+        "c3": (212, 0, 62)
+    },
+    "OMELETTE": {
+        "logo": "omelette.png",
+        "c1": (229, 218, 151),
+        "c2": (158, 84, 68),
+        "c3": (51, 60, 36)
     },
     "SPACESTATION": {
         "logo": "spacestation.png",
@@ -232,23 +321,117 @@ TEAM_INFO = {
         "c2": (149, 191, 71),
         "c3": (255, 255, 255)
     },
-    "HEY BRO": {
-        "logo": "hey_bro.png",
-        "c1": (230, 170, 247),
-        "c2": (96, 150, 230),
-        "c3": (255, 255, 255)
-    },
     "TEAM ZEALOUS": {
         "logo": "team_zealous.png",
         "c1": (96, 84, 76),
         "c2": (178, 178, 178),
         "c3": (255, 255, 255)
     },
+    "TSM": {
+        "logo": "tsm.png",
+        "c1": (0, 0, 0),
+        "c2": (255, 255, 255),
+        "c3": (22, 22, 22)
+    },
     # MENA
     "FALCONS": {
-        "logo": "",
-        "c1": (),
-        "c2": (),
-        "c3": ()
+        "logo": "falcons.png",
+        "c1": (1, 190, 110),
+        "c2": (1, 43, 103),
+        "c3": (255, 255, 255)
+    },
+    "RULE ONE": {
+        "logo": "rule_one.png",
+        "c1": (252, 35, 0),
+        "c2": (240, 358, 0),
+        "c3": (23, 218, 26)
+    },
+    "TWISTED MINDS": {
+        "logo": "twisted_minds.png",
+        "c1": (250, 75, 105),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
+    },
+    # SAM
+    "COMPLEXITY": {
+        "logo": "complexity.png",
+        "c1": (0, 43, 92),
+        "c2": (212, 212, 212),
+        "c3": (255, 255, 255)
+    },
+    "FURIA": {
+        "logo": "furia.png",
+        "c1": (0, 0, 0),
+        "c2": (255, 255, 255),
+        "c3": (244, 226, 64)
+    },
+    "HERO BASE": {
+        "logo": "hero_base.png",
+        "c1": (0, 0, 0),
+        "c2": (255, 66, 0),
+        "c3": (255, 255, 255)
+    },
+    "KRÜ ESPORTS": {
+        "logo": "kru_esports.png",
+        "c1": (255, 25, 143),
+        "c2": (21, 23, 32),
+        "c3": (255, 255, 255)
+    },
+    "NINJAS IN PYJAMAS": {
+        "logo": "nip.png",
+        "c1": (0, 0, 0),
+        "c2": (216, 255, 0),
+        "c3": (255, 255, 255)
+    },
+    "TEAM SECRET": {
+        "logo": "team_secret.png",
+        "c1": (0, 0, 0),
+        "c2": (255, 255, 255),
+        "c3": (17, 17, 17)
+    },
+    # APAC
+    "ELEVATE": {
+        "logo": "elevate.png",
+        "c1": (214, 32, 39),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
+    },
+    "GAIMIN GLADIATORS": {
+        "logo": "gaimin_gladiators.png",
+        "c1": (0, 0, 0),
+        "c2": (165, 159, 135),
+        "c3": (255, 255, 255)
+    },
+    # OCE
+    "PIONEERS": {
+        "logo": "pioneers.png",
+        "c1": (0, 0, 0),
+        "c2": (168, 148, 62),
+        "c3": (255, 255, 255)
+    },
+    "PWR": {
+        "logo": "pwr.png",
+        "c1": (0, 0, 0),
+        "c2": (250, 236, 42),
+        "c3": (255, 255, 255)
+    },
+    "CHIEFS ESC": {
+        "logo": "chiefs.png",
+        "c1": (59, 150, 215),
+        "c2": (245, 245, 245),
+        "c3": (0, 0, 0)
+    },
+    "GROUND ZERO": {
+        "logo": "ground_zero.png",
+        "c1": (58, 65, 79),
+        "c2": (142, 228, 41),
+        "c3": (255, 255, 255)
+    },
+    # SSA
+    "LIMITLESS": {
+        "logo": "limitless.png",
+        "c1": (0, 0, 0),
+        "c2": (64, 182, 254),
+        "c3": (166, 230, 255)
     }
 }

@@ -27,15 +27,18 @@ def calculate_stats(game_list):
                     id_map[id_str] = team
                 team_data[team.name] = {
                     "gp": 0,
+                    "sp": 0,
                     "oh_touches": 0,
                     "ha_touches": 0,
                     "boost_use": 0,
                     "goal_diff": 0,
                     "shots": 0,
                     "assists": 0,
-                    "goals": 0
+                    "goals": 0,
+                    "demos": 0
                 }
             team_data[team.name]["gp"] += 1
+            team_data[team.name]["sp"] += game.game_metadata.seconds
             team_data[team.name]["goals"] += team.score
             if idx == 0:
                 team_data[team.name]["goal_diff"] += (team.score - game.teams[1].score)
@@ -46,6 +49,12 @@ def calculate_stats(game_list):
             team_data[player.team_name]["shots"] += player.shots
             team_data[player.team_name]["assists"] += player.assists
             team_data[player.team_name]["boost_use"] += player.stats.boost.boost_usage
+
+        for demo in game.game_metadata.demos:
+            if not demo.is_valid:
+                continue
+            attacker = [player for player in game.players if player.id.id == demo.attacker_id.id][0]
+            team_data[attacker.team_name]["demos"] += 1
             
         for hit in [hit for hit in game.game_stats.hits]:
             team = id_map[hit.player_id.id]
@@ -56,19 +65,20 @@ def calculate_stats(game_list):
                 team_data[team.name]["ha_touches"] += 1
     return team_data
 
-def create_image(player_name, game_list, config):
-    img = Image.new(mode = "RGBA", size = (IMAGE_X, IMAGE_Y), color = WHITE)
+def create_image(game_list, config):
+    team_data = calculate_stats(game_list)
+    for data in team_data.values():
+        for key in data.keys():
+            if key not in ["gp", "sp"]:
+                data[key] = round(data[key] / (data["sp"] / 300), 2)
+    data_sorted = dict(sorted(team_data.items(), key=lambda item: (-1 * item[1]["goal_diff"], item[0])))
+
+    img_height = (len(data_sorted.keys()) * 130) + 400
+    img = Image.new(mode = "RGBA", size = (IMAGE_X, img_height), color = WHITE)
     draw = ImageDraw.Draw(img)
     
     # Logo in top left
     logo_width, _ = utils.draw_team_logo(img, MARGIN, config["logo"])
-
-    team_data = calculate_stats(game_list)
-    for data in team_data.values():
-        for key in data.keys():
-            if key != "gp":
-                data[key] = round(data[key] / data["gp"], 2)
-    data_sorted = dict(sorted(team_data.items(), key=lambda item: item[1]["goal_diff"], reverse=True))
     
     name_y, base_y, row_y = 325, 450, 125
     base_x = 150
@@ -77,7 +87,7 @@ def create_image(player_name, game_list, config):
     draw.text((base_x + 775, name_y), "Goals", fill=BLACK, font=constants.BOUR_60)
     draw.text((base_x + 1070, name_y), "Shots", fill=BLACK, font=constants.BOUR_60)
     draw.text((base_x + 1300, name_y), "Off. Half Touches", fill=BLACK, font=constants.BOUR_60)
-    draw.text((base_x + 1805, name_y), "Boost Usage", fill=BLACK, font=constants.BOUR_60)
+    draw.text((base_x + 1805, name_y), "Demos", fill=BLACK, font=constants.BOUR_60)
     team_list = list(data_sorted.keys())
     for i in range(len(team_list)):
         name = team_list[i]
@@ -101,7 +111,7 @@ def create_image(player_name, game_list, config):
         draw.text((base_x + 800, base_y + (i * row_y)), "{:.2f}".format(data_sorted[name]['goals']), fill=BLACK, font=constants.BOUR_50)
         draw.text((base_x + 1100, base_y + (i * row_y)), "{:.2f}".format(data_sorted[name]['shots']), fill=BLACK, font=constants.BOUR_50)
         draw.text((base_x + 1460, base_y + (i * row_y)), "{:.2f}".format(data_sorted[name]['oh_touches']), fill=BLACK, font=constants.BOUR_50)
-        draw.text((base_x + 1870, base_y + (i * row_y)), "{:.2f}".format(data_sorted[name]['boost_use']), fill=BLACK, font=constants.BOUR_50)
+        draw.text((base_x + 1845, base_y + (i * row_y)), "{:.2f}".format(data_sorted[name]['demos']), fill=BLACK, font=constants.BOUR_50)
 
     # Title text
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
@@ -112,21 +122,20 @@ def create_image(player_name, game_list, config):
     img.save(os.path.join("viz", "images", config["img_name"]))
 
 def main():
-    player_name = "CHEESE."
-    key = "LATAM CHAMP"
+    key = "RL ESPORTS"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": "ATTACKING STATS",
-        "t2": "LATAM CHAMPIONSHIP 2023 | BRAZIL | EVENT 3 | DAY 2 & 3",
-        "t3": "PER-GAME VALUES, RANKED BY GOAL DIFFERENTIAL",
+        "t2": "RLCS 24 NA | OQ 1 | SWISS",
+        "t3": "PER 5:00 VALUES, RANKED BY GOAL DIFFERENTIAL",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("rankings", "latam_3_ranking.png")
+        "img_name": os.path.join("RLCS 24", "NA", "rankings", "OQ1_swiss_off_ranking.png")
     }
 
-    data_path = os.path.join("replays", "Playoffs")
+    data_path = os.path.join("replays", "RLCS 24", "Major 1", "North America", "Open Qualifiers 1", "Day 3 - Swiss Stage")
     game_list = utils.read_group_data(data_path)
-    create_image(player_name, game_list, config)
+    create_image(game_list, config)
     
     return 1
   

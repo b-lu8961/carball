@@ -2,7 +2,7 @@ from viz import constants, utils
 
 import numpy as np
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 IMAGE_X, IMAGE_Y = 2400, 2250
 MARGIN = 40
@@ -23,6 +23,7 @@ def calculate_hit_maps(game_list):
     bounds_y = [(-np.inf, -(map_y / 4)), (-(map_y / 4), 0), (0, map_y / 4), (map_y / 4, np.inf)]
     bounds_z = [(0, ball_height), (ball_height, goal_z), (goal_z, map_z)]
     hit_locs, hit_locs_vert = {}, {}
+    totals = [0, 0]
     id_map = {}
     for game in game_list:
         if len(id_map.keys()) == 0:
@@ -42,6 +43,10 @@ def calculate_hit_maps(game_list):
         for hit in game.game_stats.hits:
             is_orange = id_map[hit.player_id.id]
             ball_x, ball_y, ball_z = hit.ball_data.pos_x, hit.ball_data.pos_y, hit.ball_data.pos_z
+            if is_orange:
+                totals[1] += 1
+            else:
+                totals[0] += 1
 
             for i in range(len(bounds_y)):
                 if bounds_y[i][0] <= ball_y and ball_y < bounds_y[i][1]:
@@ -55,7 +60,7 @@ def calculate_hit_maps(game_list):
                             break
                     break
 
-    return hit_locs, hit_locs_vert
+    return hit_locs, hit_locs_vert, totals
 
 def draw_main(color_map, text_map):
     width, height = round(constants.MAP_Y) + (MARGIN * 4), round(constants.MAP_X) + (MARGIN * 2)
@@ -155,7 +160,7 @@ def draw_vert(color_map, text_map):
     return img
 
 def draw_field(base_draw, game_list):
-    hit_locs, hit_locs_vert = calculate_hit_maps(game_list)
+    hit_locs, hit_locs_vert, totals = calculate_hit_maps(game_list)
 
     diffs = (np.array(hit_locs[False]) - np.array(hit_locs[True]), np.array(hit_locs_vert[False]) - np.array(hit_locs_vert[True]))
     max_diffs = (np.max(np.abs(diffs[0])) + 5, np.max(np.abs(diffs[1])) + 5)
@@ -185,7 +190,7 @@ def draw_field(base_draw, game_list):
     img_main = draw_main(color_maps[0], text_maps[0])
     img_vert = draw_vert(color_maps[1], text_maps[1])
 
-    return img_main, img_vert
+    return img_main, img_vert, totals
 
 def create_image(team_names, game_list, config):
     img = Image.new(mode = "RGBA", size = (IMAGE_X, IMAGE_Y), color = WHITE)
@@ -198,11 +203,22 @@ def create_image(team_names, game_list, config):
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Main field image
-    img_main, img_vert = draw_field(draw, game_list)
+    img_main, img_vert, totals = draw_field(draw, game_list)
     field_left = round((IMAGE_X / 2) - (img_main.width / 2))
     field_right = round((IMAGE_X / 2) + (img_main.width / 2))
     img.paste(img_vert, (field_left, get_y(img_vert.height + (2 * MARGIN), IMAGE_Y)))
     img.paste(img_main, (field_left, get_y(img_vert.height + img_main.height + (2 * MARGIN), IMAGE_Y)))
+
+    # Touch totals
+    total_len = draw.textlength(f"{totals[0]}:{totals[1]}", font=constants.BOUR_50)
+    blue_len = draw.textlength(str(totals[0]), font=constants.BOUR_50)
+    total_left = ((IMAGE_X - total_len) / 2) - 1
+    draw.text((total_left, get_y(img_main.height + img_vert.height + (2.5 * MARGIN), IMAGE_Y)), 
+        f"{totals[0]}", fill=constants.TEAM_INFO["RL ESPORTS"]["c1"], font=constants.BOUR_50)
+    draw.text((total_left + blue_len, get_y(img_main.height + img_vert.height + (2.5 * MARGIN), IMAGE_Y)), 
+        ":", fill=DARK_GREY, font=constants.BOUR_50)
+    draw.text((total_left + blue_len + 14, get_y(img_main.height + img_vert.height + (2.5 * MARGIN), IMAGE_Y)), 
+        f"{totals[1]}", fill=constants.TEAM_INFO["RL ESPORTS"]["c2"], font=constants.BOUR_50)
 
     # Team names
     for i in range(len(team_names)):
@@ -223,19 +239,19 @@ def create_image(team_names, game_list, config):
 
 
 def main():
-    team_names = ("DANIEL", "WAHVEY")
-    key = "SALT MINE 3"
+    team_names = ("TWISTED MINDS", "RULE ONE")
+    key = "RL ESPORTS"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": f"{team_names[0]} 2 - 3 {team_names[1]}",
-        "t2": "SALT MINE 3 - NA | STAGE 2 | GROUP B",
+        "t2": "RLCS 24 MAJOR 1 | MENA OQ 1 | SWISS R3",
         "t3": "TOUCH DIFFERENTIALS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("Salt Mine 3", "touches", "daniel_vs_wahvey_touch_heatmap.png")
+        "img_name": os.path.join("RLCS 24", "MENA", "touches", f"{team_names[0].lower()}_{team_names[1].lower()}_touch_diff.png")
     }
 
-    data_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - NA", "Groups", "Group B", f"{team_names[0]} VS {team_names[1]}")
+    data_path = os.path.join("replays", "RLCS 24", "Major 1", "MENA", "OQ 1", "Swiss", "Round 3", "R1 vs TWIS")
     game_list = utils.read_series_data(data_path)
     create_image(team_names, game_list, config)
     
