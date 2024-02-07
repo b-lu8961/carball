@@ -14,6 +14,8 @@ class GoalStats(BaseStat):
         goals_sorted = sorted(proto_stat.goals, key=lambda x: x.frame_number)
         blue_goals = 0
         orange_goals = 0
+        start_frame = 0
+        assist_count = 0
         for goal in goals_sorted:
             frame_num = goal.frame_number
             scorer = player_map[goal.player_id.id]
@@ -79,19 +81,28 @@ class GoalStats(BaseStat):
                 curr_touch = [hit for hit in proto_game.game_stats.hits if hit.frame_number == prev_hit_frame][0]
             goal.cons_team_touches = num_touches
 
-            ko_hit = [hit for hit in proto_game.game_stats.hits if hit.previous_hit_frame_number == 0 \
-                and hit.frame_number < goal.frame_number][-1]
-            goal.time_after_kickoff = round(data_frame['game', 'delta'].loc[ko_hit.frame_number:goal.frame_number].sum(), 3)
+            try:
+                ko_hit = [hit for hit in proto_game.game_stats.hits if hit.previous_hit_frame_number == 0 \
+                    and hit.frame_number < goal.frame_number][-1]
+                ko_frame = ko_hit.frame_number
+            except:
+                ko_frame = proto_game.game_stats.kickoffs[-1].end_frame_number
+            goal.time_after_kickoff = round(data_frame['game', 'delta'].loc[ko_frame:goal.frame_number].sum(), 3)
 
             goal_hit = self.get_goal_hit(proto_game, goal)
-            if goal_hit is None:
-                continue
-            if goal_hit.assisted:
-                assister_id = self.get_assister_id(proto_game, goal_hit)
-                assister = player_map[assister_id]
-                goal.assister = assister.name
-            else:
-                goal.assister = ""
+            if goal_hit is not None:
+                assist_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number < goal_hit.frame_number
+                    and hit.frame_number > start_frame and hit.match_assist]
+            
+                if len(assist_hit) > 0:
+                    goal.assister = player_map[assist_hit[0].player_id.id].name
+                    assist_count += 1
+                else:
+                    goal.assister = ""
+            
+            start_frame = goal.frame_number
+        if sum([player.assists for player in proto_game.players]) != assist_count:
+            print("Mismatched assists: ", proto_game.game_metadata.name)
 
     @staticmethod
     def get_team_names(pb_game):
@@ -109,10 +120,3 @@ class GoalStats(BaseStat):
         for i in range(len(goal_hits) - 1, -1, -1):
             if goal_hits[i].frame_number < goal.frame_number:
                 return goal_hits[i]
-            
-    @staticmethod
-    def get_assister_id(proto_game, goal_hit):
-        assist_hits = [hit for hit in proto_game.game_stats.hits if hit.assist]
-        for i in range(len(assist_hits) - 1, -1, -1):
-            if assist_hits[i].frame_number < goal_hit.frame_number:
-                return assist_hits[i].player_id.id

@@ -58,6 +58,7 @@ class BallDistanceStat(BaseStat):
                             for player_id, player_data_frame in player_displacements.items()}
 
         player_distances_data_frame = pd.concat(player_distances, axis=1)
+        player_distances_data_frame = player_distances_data_frame.fillna(10000)
         closest_players = player_distances_data_frame.idxmin(axis=1).rename('closest_player')
         furthest_players = player_distances_data_frame.idxmax(axis=1).rename('furthest_player')
         player_distance_with_delta = pd.concat([player_distances_data_frame, data_frame['game', 'delta'].rename('delta')], axis=1)

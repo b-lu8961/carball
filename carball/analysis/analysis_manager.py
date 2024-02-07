@@ -2,6 +2,7 @@ import logging
 import time
 from typing import Dict, Callable, Union
 
+import numpy as np
 import pandas as pd
 import json
 import os
@@ -13,8 +14,11 @@ from typing.io import IO
 from .utils.json_encoder import CarballJsonEncoder
 
 script_path = os.path.abspath(__file__)
-with open(os.path.join(os.path.dirname(script_path), 'PROTOBUF_VERSION'), 'r') as f:
-    PROTOBUF_VERSION = json.loads(f.read())
+try:
+    with open(os.path.join(os.path.dirname(script_path), 'PROTOBUF_VERSION'), 'r') as f:
+        PROTOBUF_VERSION = json.loads(f.read())
+except FileNotFoundError:
+    PROTOBUF_VERSION = 7
 
 from ..analysis.cleaner.cleaner import clean_replay
 from ..analysis.saltie_game.metadata.ApiGame import ApiGame
@@ -201,8 +205,8 @@ class AnalysisManager:
 
         self._get_game_time(proto_game, data_frame)
         if clean:
-            num_removed = clean_replay(game, data_frame, proto_game, player_map)
-            if num_removed != 0:
+            removed = clean_replay(game, data_frame, proto_game, player_map)
+            if len(removed) > 1 or (len(removed) == 1 and "referee" not in removed[0].lower()):
                 return
 
         self._log_time("Creating events...")
@@ -258,6 +262,19 @@ class AnalysisManager:
             except:
                 player.time_in_game = 0
 
+        val_rows = data_frame[~np.isnan(data_frame['game']['seconds_remaining'])]
+        first_row, last_row = val_rows.head(1), val_rows.tail(1)
+        first_idx, last_idx = first_row.index[0], last_row.index[0]
+        first_sec, last_sec = first_row['game']['seconds_remaining'].at[first_idx], last_row['game']['seconds_remaining'].at[last_idx]
+        if 'is_overtime' in last_row['game'] and last_row['game']['is_overtime'].at[last_idx]:
+            secs = first_sec + last_sec
+            protobuf_game.game_metadata.last_second = int(-1 * last_sec)
+        else:
+            secs = first_sec - last_sec
+            protobuf_game.game_metadata.last_second = int(last_sec)
+            
+        protobuf_game.game_metadata.seconds = int(secs)
+
         logger.info("Set each player's in-game times.")
 
     def _get_kickoff_frames(self, game: Game, proto_game: game_pb2.Game, data_frame: pd.DataFrame):
@@ -282,11 +299,22 @@ class AnalysisManager:
             kickoff_frames = kickoff_frames[:len(first_touch_frames)]
 
         for goal_number, goal in enumerate(game.goals):
-            data_frame.loc[kickoff_frames[goal_number]: goal.frame_number, ('game', 'goal_number')] = goal_number
+            if kickoff_frames[goal_number] > goal.frame_number:
+                data_frame.loc[goal.frame_number : kickoff_frames[goal_number], ('game', 'goal_number')] = goal_number
+            else:
+                data_frame.loc[kickoff_frames[goal_number] : goal.frame_number, ('game', 'goal_number')] = goal_number
 
         # Set goal_number of frames that are post last kickoff to -1 (ie non None)
         if len(kickoff_frames) > len(proto_game.game_metadata.goals):
-            data_frame.loc[kickoff_frames[-1]:, ('game', 'goal_number')] = -1
+            if len(proto_game.game_metadata.goals) == 0:
+                kickoffs_seen = 0
+            else:
+                kickoffs_seen = len([frame for frame in kickoff_frames if frame < proto_game.game_metadata.goals[-1].frame_number])
+            num_extra = kickoffs_seen - len(kickoff_frames)
+            data_frame.loc[kickoff_frames[num_extra]:, ('game', 'goal_number')] = -1
+        # fix_df = data_frame["game"].loc[kickoff_frames[0]:kickoff_frames[-1]]
+        # fix_idx = fix_df["goal_number"][np.isnan(fix_df["goal_number"])].index
+        # data_frame.loc[fix_idx, ("game", "goal_number")] = 0
 
         for index in range(min(len(kickoff_frames), len(first_touch_frames))):
             kickoff = proto_game.game_stats.kickoffs.add()
@@ -357,9 +385,9 @@ class AnalysisManager:
             logger.warning("Not doing full analysis. No one touched the ball")
             return False
 
-        # if any((team_size != team_sizes[0]) for team_size in team_sizes):
-        #     logger.warning("Not doing full analysis. Not all team sizes are equal")
-        #     return False
+        if team_sizes[0] > 3 or team_sizes[1] > 3:
+            logger.warning("Not doing full analysis. Team size greater than 3")
+            return False
 
         return True
 

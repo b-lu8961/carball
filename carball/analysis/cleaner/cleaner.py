@@ -25,10 +25,10 @@ def clean_replay(game: Game, data_frame: pd.DataFrame, proto_game: game_pb2.Game
     drop_nans(data_frame)
 
     # Remove players with missing data.
-    num_removed = remove_invalid_players(game, data_frame, proto_game, player_map)
+    removed = remove_invalid_players(game, data_frame, proto_game, player_map)
 
     logger.info("Replay cleaned.")
-    return num_removed
+    return removed
 
 
 def drop_nans(data_frame: pd.DataFrame):

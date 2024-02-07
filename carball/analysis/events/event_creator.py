@@ -71,19 +71,45 @@ class EventsCreator:
             hit = hits_copy[i]
             old_hit = proto_game.game_stats.hits.add(
                 frame_number = hit.frame_number,
-                seconds_remaining = hit.seconds_remaining,
-                goal_number = hit.goal_number,
                 player_id = hit.player_id,
                 collision_distance = hit.collision_distance,
                 ball_data = hit.ball_data,
-                is_kickoff = hit.is_kickoff,
+                goal_number = hit.goal_number,
+                is_kickoff = hit.is_kickoff, 
+                match_assist = hit.match_assist,
+                match_goal = hit.match_goal,
                 match_save = hit.match_save,
                 match_shot = hit.match_shot,
-                match_goal = hit.match_goal,
-                match_assist = hit.match_assist
+                seconds_remaining = hit.seconds_remaining
             )
-            hits[hit.frame_number] = old_hit
-            if hit.frame_number < insert_frame and (i + 1 == len(hits_copy) or hits_copy[i + 1].frame_number > insert_frame):
+            if i == 0 and insert_frame < hit.frame_number:
+                if insert_frame in collision_distances[curr_player.is_orange][curr_player.name].index:
+                    col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame]
+                else:
+                    col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame - 1]
+                new_hit = proto_game.game_stats.hits.add(
+                    frame_number = insert_frame,
+                    player_id = curr_player.id,
+                    collision_distance = col_dist,
+                    goal_number = hit.goal_number,
+                    is_kickoff = hit.is_kickoff
+                )
+                new_hit.ball_data.pos_x = data_frame['ball']['pos_x'].at[insert_frame]
+                new_hit.ball_data.pos_y = data_frame['ball']['pos_y'].at[insert_frame]
+                new_hit.ball_data.pos_z = data_frame['ball']['pos_z'].at[insert_frame]
+                game_info = data_frame.loc[hit.frame_number, 'game']
+                game_secs = game_info['seconds_remaining']
+                if "is_overtime" in game_info.keys() and game_info['is_overtime']:
+                    new_hit.seconds_remaining = -1 if np.isnan(game_secs) else -1 * int(game_secs)
+                else:
+                    new_hit.seconds_remaining = 0 if np.isnan(game_secs) else int(game_info['seconds_remaining'])
+
+                hits[insert_frame] = new_hit
+                hits[hit.frame_number] = old_hit
+            elif hit.frame_number < insert_frame and (i + 1 == len(hits_copy) or hits_copy[i + 1].frame_number >= insert_frame):
+                if (i + 1) < len(hits_copy) and hits_copy[i + 1].frame_number == insert_frame:
+                    insert_frame += 1
+
                 if hit.frame_number in collision_distances[curr_player.is_orange][curr_player.name].index:
                     col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[hit.frame_number]
                 else:
@@ -104,7 +130,12 @@ class EventsCreator:
                     new_hit.seconds_remaining = -1 if np.isnan(game_secs) else -1 * int(game_secs)
                 else:
                     new_hit.seconds_remaining = 0 if np.isnan(game_secs) else int(game_info['seconds_remaining'])
+
+                hits[hit.frame_number] = old_hit
                 hits[insert_frame] = new_hit
+            else:
+                # Move on to next hit
+                pass
 
         return new_hit
 
@@ -154,17 +185,22 @@ class EventsCreator:
                 if curr_player_hit is None or ((last_team_hit.player_id.id != curr_player.id.id) and \
                         (last_team_hit.frame_number - curr_player_hit.frame_number) >= 75):
                     # Hit was misattributed; need to correct
-                    curr_player_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[last_team_hit.frame_number]
+                    last_team_frame = last_team_hit.frame_number
+                    if last_team_hit.frame_number not in collision_distances.index:
+                        last_team_frame -= 1
+                        
+                    curr_player_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[last_team_frame]
                     if curr_player_dist > 400:
                         # curr player had 50-50 with opponent, hit needs to be added
                         recent_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number <= idx][-1]
                         # Insert new hit after recent_hit
                         new_hit_frame = recent_hit.frame_number - 1 if idx == recent_hit.frame_number else recent_hit.frame_number + 1
-                        self.insert_hit(proto_game, data_frame, hits, new_hit_frame, curr_player, collision_distances)
+                        if player_map[recent_hit.player_id.id].is_orange != curr_player.is_orange:
+                            self.insert_hit(proto_game, data_frame, hits, new_hit_frame, curr_player, collision_distances)
                     else:
                         # Hit by teammate actually belongs to curr player
                         last_team_hit.player_id.id = curr_player.id.id
-                        last_team_hit.collision_distance = collision_distances[curr_player.is_orange][curr_player.name].loc[last_team_hit.frame_number]
+                        last_team_hit.collision_distance = collision_distances[curr_player.is_orange][curr_player.name].loc[last_team_frame]
 
 
         # Assign stats separately due to hit corrections
@@ -173,13 +209,20 @@ class EventsCreator:
             for stat_type in sb_cols:
                 if len(indices[name][stat_type]) == 0:
                     continue
+                
                 for stat_idx in indices[name][stat_type]:
-                    hit_list = [hit for hit in proto_game.game_stats.hits if 
+                    goal_frames = [goal.frame_number for goal in proto_game.game_metadata.goals if goal.frame_number < stat_idx]
+                    if len(goal_frames) > 1:
+                        start_frame = goal_frames[-2]
+                    else:
+                        start_frame = 0
+
+                    hit_list = [hit for hit in proto_game.game_stats.hits if hit.frame_number > start_frame and
                         hit.frame_number <= stat_idx and hit.player_id.id == curr_player.id.id]
                     if len(hit_list) != 0:
                         stat_hit = hit_list[-1]
                     else:
-                        min_frame = collision_distances[curr_player.is_orange][curr_player.name].loc[0:stat_idx].idxmin()
+                        min_frame = collision_distances[curr_player.is_orange][curr_player.name].loc[start_frame:stat_idx].idxmin()
                         while len([hit for hit in proto_game.game_stats.hits if hit.frame_number == min_frame]) != 0:
                             min_frame += 1
                         stat_hit = self.insert_hit(proto_game, data_frame, hits, min_frame, curr_player, collision_distances)
@@ -207,7 +250,8 @@ class EventsCreator:
                 if stat_type == 'match_assists' and len(indices[name][stat_type]) != curr_player.assists:
                     last_hit.match_assist = True
    
-        SaltieHit.get_saltie_hits_from_game(proto_game, hits, player_map, data_frame, kickoff_frames)
+        hits_dict = {hit.frame_number: hit for hit in proto_game.game_stats.hits}
+        SaltieHit.get_saltie_hits_from_game(proto_game, hits_dict, player_map, data_frame, kickoff_frames)
         logger.info("Analysed hits.")
 
         for curr_player in proto_game.players:

@@ -99,7 +99,8 @@ class SaltieHit:
         else:
             last_passing_hit = None
             # passing detection
-            if player_map[saltie_hit.player_id.id].is_orange == player_map[next_saltie_hit.player_id.id].is_orange:
+            if (player_map[saltie_hit.player_id.id].is_orange == player_map[next_saltie_hit.player_id.id].is_orange) \
+                    and not next_saltie_hit.is_kickoff:
                 saltie_hit.pass_ = True
                 next_saltie_hit.passed = True
                 last_passing_hit = saltie_hit

@@ -17,3 +17,5 @@ dist/
 
 viz/images/
 *.json
+
+clf/

@@ -43,10 +43,12 @@ class PickupAnalysis:
             data_frame[player.name, 'boost_collect'] = player_vals_df['boost_collect']
             for idx in player_vals_df['boost_collect'].loc[~np.isnan(player_vals_df['boost_collect'])].index:
                 label = int(player_vals_df['boost_collect'].at[idx])
-                boost_pad = [boost_pad for boost_pad in proto_game.game_stats.boost_pads if boost_pad.label == label][0]
                 if np.isnan(data_frame['ball']['vel_x'].at[idx]):
                     # boost pickups after a goal is scored
                     continue
+                if label == 38:
+                    label = 40
+                boost_pad = [boost_pad for boost_pad in proto_game.game_stats.boost_pads if boost_pad.label == label][0]
                 seconds = data_frame['game']['seconds_remaining'].at[idx]
                 if 'is_overtime' in data_frame['game'] and data_frame['game']['is_overtime'].at[idx]:
                     seconds *= -1

@@ -105,6 +105,35 @@ class BaseHit:
                     raise e
 
         all_hits = {}
+        norm_df = data_frame['ball'][['ang_vel_x', 'ang_vel_y', 'ang_vel_z']].diff().loc[hit_frame_numbers]
+        norm_df['norm'] = np.linalg.norm(norm_df, axis=1)
+        big_idx = norm_df[norm_df['norm'] > 10000].index
+        for idx in big_idx:
+            ball_pos = list(data_frame['ball'][['pos_x', 'pos_y', 'pos_z']].loc[idx])
+            if ball_pos[0] < (-4096 + (1.5*92.75)) or ball_pos[0] > (4096 - (1.5*92.75)):
+                continue
+            if ball_pos[1] < (-5120 + (1.5*92.75)) or ball_pos[1] > (5120 - (1.5*92.75)):
+                continue
+            if ball_pos[2] < (0 + (1.5*92.75)) or ball_pos[2] > (2044 - (1.5*92.75)):
+                continue
+            hit_found = False
+            closest_val = collision_distances_data_frame['closest_player']['name'].at[idx]
+            
+            if type(closest_val) != str and type(one) != str and type(two) != str and np.isnan(closest_val):
+                for i in [idx - 2, idx - 1, idx + 1, idx + 2]:
+                    if i in collision_distances_data_frame:
+                        if type(collision_distances_data_frame['closest_player']['name']) == str:
+                            hit_found = True
+                            break
+                if not hit_found:
+                    for team_no in [0, 1]:
+                        min_dist = (collision_distances_data_frame.loc[idx])[team_no].min()
+                        if min_dist < 325:
+                            close_name = (collision_distances_data_frame.loc[idx])[team_no].idxmin()
+                            collision_distances_data_frame.loc[idx, ('closest_player', 'name')] = close_name
+                            collision_distances_data_frame.loc[idx, ('closest_player', 'distance')] = min_dist
+                            break
+                    
         hits_data = collision_distances_data_frame['closest_player'].dropna()
         if len(hits_data) > 1:
             hit_frames_to_keep = BaseHit.filter_out_duplicate_hits(hits_data)

@@ -23,6 +23,7 @@ from carball.analysis.stats.dropshot.goals import DropshotGoals
 from carball.analysis.stats.dropshot.ball_phase_times import DropshotBallPhaseTimes
 from carball.analysis.stats.dropshot.damage import DropshotStats
 from carball.analysis.stats.goals.goals import GoalStats
+from carball.analysis.stats.shot_details.shot_details import ShotDetailStats
 
 
 class StatsList:
@@ -60,7 +61,7 @@ class StatsList:
                 ]
 
     @staticmethod
-    def get_general_stats() ->List[BaseStat]:
+    def get_general_stats() -> List[BaseStat]:
         """These are stats that end up being assigned to the game as a whole"""
         return [PositionalTendencies(),
                 #SpeedTendencies(),
@@ -71,7 +72,7 @@ class StatsList:
                 ]
 
     @staticmethod
-    def get_hit_stats() ->List[HitStat]:
+    def get_hit_stats() -> List[HitStat]:
         """These are stats that depend on current hit and next hit"""
         return [DistanceStats(),
                 PossessionStat(),
@@ -80,8 +81,9 @@ class StatsList:
                 ]
 
     @staticmethod
-    def get_metadata_stats() ->List[BaseStat]:
+    def get_metadata_stats() -> List[BaseStat]:
         return [
             GoalStats(),
-            DemoStat()
+            DemoStat(),
+            ShotDetailStats()
         ]

@@ -3,6 +3,7 @@ syntax = "proto2";
 import "api/player_id.proto";
 import "api/stats/extra_mode_stats.proto";
 import "api/stats/events.proto";
+import "api/stats/shot_detail.proto";
 
 package api.metadata;
 
@@ -61,7 +62,7 @@ message Demo {
     optional api.PlayerId victim_id = 3;
     optional string attacker_name = 4;
     optional string victim_name = 5;
-    optional api.stats.BallData location = 6;
+    optional api.stats.BallData location = 6; // location of demo (not ball)
     optional bool is_valid = 7;
     optional bool is_behind_ball = 8;
 }
@@ -85,4 +86,7 @@ message GameMetadata {
     optional Playlist playlist = 17;
     optional bool is_invalid_analysis = 18; // True if we did not perform a full analysis on the replay.
     optional int32 unknown_playlist = 19;
+    repeated api.stats.ShotDetail shot_details = 20;
+    optional int32 seconds = 21;
+    optional sint32 last_second = 22;
 }

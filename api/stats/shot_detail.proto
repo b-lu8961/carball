@@ -1,0 +1,39 @@
+syntax = "proto2";
+
+import "api/stats/events.proto";
+
+package api.stats;
+
+message PlayerData {
+    optional BallData pos = 1;
+    optional BallData vel = 2;
+    optional int32 boost = 3;
+    optional int32 jump_active = 4;
+    optional int32 dodge_active = 5;
+    optional int32 double_jump_active = 6;
+}
+
+message ShotDetail {
+    optional float distance = 1;
+    optional float angle = 2;
+    optional float z_angle = 3;
+    optional float goalward_speed = 4;
+    optional float ball_speed = 5;
+    optional int32 goalside_defs = 6;
+    optional float avg_def_goal_dist = 7;
+    optional float min_def_ball_dist = 8;
+    optional int32 prev_touch_type = 9;
+    optional bool is_goal = 10;
+    optional int32 frame_number = 11;
+    optional bool is_orange = 12;
+    optional int32 seconds_remaining = 13;
+    optional PlayerData shooter = 14;
+    repeated PlayerData teammates = 15;
+    repeated PlayerData defenders = 16;
+    optional BallData ball_pos = 17;
+    optional BallData ball_vel = 18;
+    optional int32 previous_hit_frame_number = 19;
+    optional bool is_on_target = 20;
+    optional BallData cross_pos = 21; // Position ball croses goal line
+    optional float adj_vel = 22;
+}

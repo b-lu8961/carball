@@ -3,16 +3,16 @@ import pandas as pd
 
 from .bounce import bounce
 
-BALL_RADIUS = 91.25
+BALL_RADIUS = 91.75
 SIDE_WALL_DISTANCE = 4096
-BACK_WALL_DISTANCE = 5140
+BACK_WALL_DISTANCE = 5120
 CEILING_DISTANCE = 2044
 CORNER_WALL_DISTANCE = 8000
-GOAL_X = 892.75
-GOAL_X = 950
-GOAL_Z = 640
-GOAL_Z = 750
-GOAL_Z = 900
+GOAL_X = 910 #892.75
+#GOAL_X = 950
+GOAL_Z = 665 #642.775
+#GOAL_Z = 750
+#GOAL_Z = 900
 x = 590
 # CURVE_RADIUS_1, CURVE_RADIUS_2, CURVE_RADIUS_3 = 520, 260, 190  # ramp radii
 CURVE_RADIUS_1, CURVE_RADIUS_2, CURVE_RADIUS_3 = x, x / 2, 175  # ramp radii
@@ -28,7 +28,7 @@ CURVE_Z_2 = CURVE_RADIUS_2
 CURVE_Z_3 = CURVE_RADIUS_3
 
 SIMULATION_FPS = 120
-SIMULATION_SECONDS = 3
+SIMULATION_SECONDS = 4
 
 
 class BallSimulator:
@@ -47,15 +47,15 @@ class BallSimulator:
                          }
         self.is_shot = False
 
-    def get_is_shot(self):
+    def get_is_shot(self, get_sim_data=False):
         """
         Simulates ball and returns is_shot. is_shot is updated in predict_ball_positions
         :return:
         """
-        self.sim_data = self.predict_ball_positions(t=SIMULATION_SECONDS)
+        self.sim_data = self.predict_ball_positions(t=SIMULATION_SECONDS, get_sim_data=get_sim_data)
         return self.is_shot
 
-    def predict_ball_positions(self, t):
+    def predict_ball_positions(self, t, get_sim_data=False):
         """
         Returns an array of time and position and velocity up to time=t.
         :param t: Number of seconds to simulate
@@ -63,7 +63,7 @@ class BallSimulator:
         """
         starting_x_v = np.concatenate((self.sim_vars['position'], self.sim_vars['velocity']))
         sim_data = self.simulate_time(0, t, 1 / SIMULATION_FPS, self.step_dt,
-                                      starting_x_v)
+                                      starting_x_v, get_sim_data=get_sim_data)
         return sim_data
 
     def simulate_time(self, start_time, end_time, time_step, step_func, starting_values, break_if_goal=True,
@@ -91,6 +91,9 @@ class BallSimulator:
                     (not self.is_orange) and latest_x_v[1] > BACK_WALL_DISTANCE):
                 self.is_shot = True
                 if break_if_goal:
+                    t_s.append(simulated_time)
+                    x_vs.append(latest_x_v)
+                    av_s.append(self.sim_vars['ang_vel'])
                     break
 
         if not get_sim_data:
