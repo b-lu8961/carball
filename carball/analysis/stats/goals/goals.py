@@ -102,7 +102,7 @@ class GoalStats(BaseStat):
             
             start_frame = goal.frame_number
         if sum([player.assists for player in proto_game.players]) != assist_count:
-            print("Mismatched assists: ", proto_game.game_metadata.name)
+            print("  Mismatched assists: ", proto_game.game_metadata.name)
 
     @staticmethod
     def get_team_names(pb_game):
@@ -118,5 +118,5 @@ class GoalStats(BaseStat):
     def get_goal_hit(proto_game, goal):
         goal_hits = [hit for hit in proto_game.game_stats.hits if hit.match_goal]
         for i in range(len(goal_hits) - 1, -1, -1):
-            if goal_hits[i].frame_number < goal.frame_number:
+            if goal_hits[i].frame_number <= goal.frame_number:
                 return goal_hits[i]

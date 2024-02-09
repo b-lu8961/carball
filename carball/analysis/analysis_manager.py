@@ -294,7 +294,7 @@ class AnalysisManager:
         kickoff_frames = SaltieGame.get_kickoff_frames(game)
         first_touch_frames = SaltieGame.get_first_touch_frames(game)
 
-        if len(kickoff_frames) > len(first_touch_frames):
+        if len(kickoff_frames) > len(first_touch_frames) and first_touch_frames[-1] < kickoff_frames[-1]:
             # happens when the game ends before anyone touches the ball at kickoff
             kickoff_frames = kickoff_frames[:len(first_touch_frames)]
 
@@ -305,13 +305,15 @@ class AnalysisManager:
                 data_frame.loc[kickoff_frames[goal_number] : goal.frame_number, ('game', 'goal_number')] = goal_number
 
         # Set goal_number of frames that are post last kickoff to -1 (ie non None)
+        # Extra logic for kickoffs after a pause
         if len(kickoff_frames) > len(proto_game.game_metadata.goals):
             if len(proto_game.game_metadata.goals) == 0:
                 kickoffs_seen = 0
             else:
                 kickoffs_seen = len([frame for frame in kickoff_frames if frame < proto_game.game_metadata.goals[-1].frame_number])
             num_extra = kickoffs_seen - len(kickoff_frames)
-            data_frame.loc[kickoff_frames[num_extra]:, ('game', 'goal_number')] = -1
+            if num_extra != 0:
+                data_frame.loc[kickoff_frames[num_extra]:, ('game', 'goal_number')] = -1
         # fix_df = data_frame["game"].loc[kickoff_frames[0]:kickoff_frames[-1]]
         # fix_idx = fix_df["goal_number"][np.isnan(fix_df["goal_number"])].index
         # data_frame.loc[fix_idx, ("game", "goal_number")] = 0

@@ -251,7 +251,11 @@ class Player:
         :param _dict:
         :return:
         """
-        self.data = pd.DataFrame.from_dict(_dict, orient='index')
+        if self.data is None:
+            self.data = pd.DataFrame.from_dict(_dict, orient='index')
+        else:
+            new_df = pd.DataFrame.from_dict(_dict, orient='index')
+            self.data.loc[new_df.index] = new_df
 
     def get_data_from_car(self, car_data):
         if car_data is None:
