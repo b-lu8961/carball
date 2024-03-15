@@ -92,7 +92,7 @@ def create_image(team_names, game_list, config):
     # Title text
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
-    # Touch totals
+    # Pickup totals
     total_len = draw.textlength(f"{totals[0]}:{totals[1]}", font=constants.BOUR_50)
     blue_len = draw.textlength(str(totals[0]), font=constants.BOUR_50)
     total_left = ((IMAGE_X - total_len) / 2) - 1
@@ -122,19 +122,19 @@ def create_image(team_names, game_list, config):
     img.save(os.path.join("viz", "images", config["img_name"]))
 
 def main():
-    team_names = ("DRALII", "TRK511")
-    key = "SALT MINE 3"
+    team_names = ("FALCONS", "FEARLESS")
+    key = "RL ESPORTS"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": f"{team_names[0]} 3 - 2 {team_names[1]}",
-        "t2": "SALT MINE 3 - EU | STAGE 2 | PLAYOFFS",
+        "t1": f"{team_names[0]} 3 - 0 {team_names[1]}",
+        "t2": "RLCS 24 MAJOR 1 | MENA OQ 1 | SWISS R3",
         "t3": "BOOST PICKUPS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("Salt Mine 3", "boost", f"{team_names[0].lower()}_{team_names[1].lower()}_boost.png")
+        "img_name": os.path.join("RLCS 24", "MENA",  "boost", f"{team_names[0].lower()}_{team_names[1].lower()}_boost.png")
     }
 
-    data_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - EU", "Playoffs", "UBSF - DRALII VS TRK511")
+    data_path = os.path.join("replays", "RLCS 24", "Major 1", "MENA", "OQ 1", "Swiss", "Round 3", "FEAR vs FLCN")
     game_list = utils.read_series_data(data_path)
     create_image(team_names, game_list, config)
     

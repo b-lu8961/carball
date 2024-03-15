@@ -158,7 +158,7 @@ def draw_goal_races(game_list, team_names, team_keys):
                 curr_xG += shot[1]
                 
                 if shot[2]:
-                    ellipse_color = constants.TEAM_INFO[team_keys[0]]["c1"] if line_color == BLUE else constants.TEAM_INFO[team_keys[1]]["c2"]
+                    ellipse_color = constants.TEAM_INFO[team_keys[0]]["c1"] if line_color == BLUE else constants.TEAM_INFO[team_keys[1]]["c1"]
                     ellipse_locs.append([
                         (pos_x - 8 + base_x, curr_y - 8),
                         (pos_x + 8 + base_x, curr_y + 8),
@@ -198,23 +198,26 @@ def create_image(team_names, game_list, team_keys, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", config["img_name"]))
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], "xG_timelines.png"))
 
 def main():
-    team_names = ("TWISTED MINDS", "RULE ONE")
-    team_keys = team_names
-    key = "RL ESPORTS"
+    team_names = ("TEAM3", "M8 ALPINE")
+    team_keys = ("TEAM3", "GENTLE MATES")
+    event = "RL ESPORTS"
+    base_path = os.path.join("RLCS 24", "Major 1", "Europe", "Open Qualifiers 1", "Day 4 - Single Elimination Stage", "GMA vs T3")
+
     config = {
-        "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": f"{team_names[0]} 2 - 3 {team_names[1]}",
-        "t2": "RLCS 24 MAJOR 1 | MENA OQ 1 | SWISS R3",
+        "logo": constants.TEAM_INFO[event]["logo"],
+        "t1": f"{team_keys[0]} 1 - 4 {team_keys[1]}",
+        "t2": "RLCS 24 EU | OQ 1 | QUARTERFINAL",
         "t3": "EXPECTED GOAL TIMELINES",
-        "c1": constants.TEAM_INFO[key]["c1"],
-        "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("RLCS 24", "MENA", "exp_goals", f"{team_names[0].lower()}_{team_names[1].lower()}_exp_goal_race.png")
+        "c1": constants.TEAM_INFO[event]["c1"],
+        "c2": constants.TEAM_INFO[event]["c2"],
+        "img_path": os.path.join("viz", "images", base_path, "xG")
     }
 
-    data_path = os.path.join("replays", "RLCS 24", "Major 1", "MENA", "OQ 1", "Swiss", "Round 3", "R1 vs TWIS")
+    data_path = os.path.join("replays", base_path)
     game_list = utils.read_series_data(data_path)
     create_image(team_names, game_list, team_keys, config)
     

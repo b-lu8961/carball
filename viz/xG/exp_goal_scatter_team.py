@@ -107,7 +107,7 @@ def draw_scatter(game_lists, config):
     # Plot elements
     # Top left style label
     tl_text = "Bad Offense,\nBad Defense"
-    tl_pos = (ax_pad + MARGIN, get_y(plot_height + ax_pad - (1 * MARGIN), height))
+    tl_pos = (ax_pad + MARGIN, get_y(plot_height + ax_pad - (3 * MARGIN), height))
     tl_bbox = draw.multiline_textbbox(tl_pos, tl_text, font=constants.BOUR_50, align="center")
     draw.rounded_rectangle([tl_bbox[0] - 8, tl_bbox[1] - 8, tl_bbox[2] + 8, tl_bbox[3] + 8], 10, fill=config["c3"])
     draw.text(tl_pos, tl_text, fill=WHITE, font=constants.BOUR_50, align="center")
@@ -142,11 +142,11 @@ def draw_scatter(game_lists, config):
         colors = constants.REGION_COLORS[metrics[name]["region"]]
         draw.ellipse([(pos_x - radius, pos_y - radius), (pos_x + radius, pos_y + radius)], fill=colors[0], outline=colors[1], width=2)
         
-        if name in ["TN", "OG ESPORTS", "UHUH", "FIRE HAWKS"]:
+        if name in ["NOVO", "MAGNIFICO"]:
             utils.draw_scatter_label(draw, name, pos_x, pos_y, radius, "u")
-        elif name in ["MUFFIN MEN", "CVENT"]:
+        elif name in [""]:
             utils.draw_scatter_label(draw, name, pos_x, pos_y, radius, "d")
-        elif name in ["HERO BASE", "INFINITY", "OBLIVIONE", "NRG", "LUMINOSITY", "THAT'S CRAZY", "DETONATOR", "ELITES", "BONJOUR", "LES PONEYS"]:
+        elif name in ["TOP COUGARS", "MOIST ESPORTS"]:
             utils.draw_scatter_label(draw, name, pos_x, pos_y, radius, "r")
         else:
             utils.draw_scatter_label(draw, name, pos_x, pos_y, radius, "l")
@@ -165,53 +165,39 @@ def create_image(game_lists, config):
 
     # Title text
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
-
     
     img.paste(scatter_img, (MARGIN, HEADER_HEIGHT))
 
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
-    
-    img.save(os.path.join("viz", "images", config["img_name"]))
+
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], "team_xG_perf.png"))
 
 def main():
     key = "RL ESPORTS"
-    region = "SAM"
+    region = "Europe"
+    rn = utils.get_region_label(region)
+    base_path = os.path.join("RLCS 24", "Major 1", region, "Open Qualifiers 3", "Day 3 - Swiss Stage")
+
+    game_list = utils.read_group_data(os.path.join("replays", base_path))
+    
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": "TEAM xG PERFORMANCE",
-        "t2": f"RLCS 24 {region} | OQ 1 | SWISS",
+        "t2": f"RLCS 24 {rn} | OQ 3 | SWISS",
         "t3": "",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "c3": constants.REGION_COLORS[region][0],
-        "img_name": os.path.join("RLCS 24", region, "scatter", "OQ1_xG_perf.png")
+        "c3": constants.REGION_COLORS[rn][0],
+        "img_path": os.path.join("viz", "images", base_path)
     }
 
-    if region == "APAC":
-        apac_path = os.path.join("replays", "RLCS 24", "Major 1", "Asia-Pacific", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(apac_path)
-    elif region == "EU":
-        eu_path = os.path.join("replays", "RLCS 24", "Major 1", "Europe", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(eu_path)
-    elif region == "MENA":
-        mena_path = os.path.join("replays", "RLCS 24", "Major 1", "Middle East & North Africa", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(mena_path)
-    elif region == "NA":
-        na_path = os.path.join("replays", "RLCS 24", "Major 1", "North America", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(na_path)
-    elif region == "OCE":
-        oce_path = os.path.join("replays", "RLCS 24", "Major 1", "Oceania", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(oce_path)
-    elif region == "SAM":
-        sam_path = os.path.join("replays", "RLCS 24", "Major 1", "South America", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(sam_path)
-    else:
-        ssa_path = os.path.join("replays", "RLCS 24", "Major 1", "Sub-Saharan Africa", "Open Qualifiers 1", "Day 3 - Swiss Stage")
-        game_list = utils.read_group_data(ssa_path)
-    create_image({region: game_list}, config)
     
-    return 1
+        
+    create_image({rn: game_list}, config)
+    
+    return 0
   
 if __name__ == "__main__":
     main()

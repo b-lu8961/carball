@@ -23,8 +23,7 @@ def calculate_metrics(game_lists):
         region_list = game_lists[region]
         for game in region_list:
             for team in game.teams:
-                name = team.name if team.name != "S5-COSMIC" else "COSMIC"
-                name = name if name != "DRALI" else "DRALII"
+                name = utils.get_team_label(team.name, region)
                 if name not in goal_data:
                     goal_data[name] = {
                         "region": region,
@@ -37,10 +36,8 @@ def calculate_metrics(game_lists):
                 goal_data[name]["games_played"] += 1
 
             for curr_goal in game.game_metadata.goals:
-                if goal_data[name]["cons_touches"] == 0:
-                    continue
-                #name = curr_goal.team_name if curr_goal.team_name != "S5-COSMIC" else "COSMIC"
-                #name = name if name != "DRALI" else "DRALII"
+                name = utils.get_team_label(curr_goal.team_name, region)
+                
                 goal_data[name]["goals_scored"] += 1
                 goal_data[name]["time_in_off_half"].append(curr_goal.time_in_off_half)
                 goal_data[name]["cons_touches"].append(curr_goal.cons_team_touches)
@@ -55,14 +52,17 @@ def calculate_metrics(game_lists):
 
 def draw_scatter(game_lists, config):
     metrics, totals = calculate_metrics(game_lists)
+    print(len(metrics))
     ko_med_list = [round(np.median(metrics[name]["time_after_ko"]), 3) for name in metrics]
     oh_med_list = [round(np.median(metrics[name]["time_in_off_half"]), 3) for name in metrics]
-    # for name in metrics:
+    # for name in sorted(metrics):
     #     print(
-    #         "{:<8}".format(name),
+    #         "{:<15}".format(name),
+    #         metrics[name]['games_played'],
     #         "{:<7}".format(round(np.median(metrics[name]["time_after_ko"]), 3)),
     #         round(np.median(metrics[name]["time_in_off_half"]), 3)
     #     )
+    print(metrics["KARMINE CORP"])
     bounds_x = (min(ko_med_list) - 1, max(ko_med_list) + 1)
     bounds_y = (min(oh_med_list) - 1, max(oh_med_list) + 1)
 
@@ -132,7 +132,7 @@ def draw_scatter(game_lists, config):
         val_x, val_y = np.median(metrics[name]["time_after_ko"]), np.median(metrics[name]["time_in_off_half"])
         pos_x = ax_pad + (((val_x - bounds_x[0]) / (bounds_x[1] - bounds_x[0])) * plot_width)
         pos_y = get_y(ax_pad + (((val_y - bounds_y[0]) / (bounds_y[1] - bounds_y[0])) * plot_height), height)
-        color = constants.TEAM_INFO["RL ESPORTS"]["c1"] if metrics[name]["region"] == "na" else constants.TEAM_INFO["RL ESPORTS"]["c2"]
+        color = constants.REGION_COLORS[metrics[name]["region"]][0]
         draw.ellipse([(pos_x - radius, pos_y - radius), (pos_x + radius, pos_y + radius)], fill=color)
         name_len = draw.textlength(name, font=constants.BOUR_30)
         draw.text((pos_x - name_len - (1.5 * radius), pos_y - (1 * radius)), name, fill=BLACK, font=constants.BOUR_30)
@@ -158,26 +158,27 @@ def create_image(game_lists, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", config["img_name"]))
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], "team_goal_style.png"))
 
 def main():
-    key = "SALT MINE 3"
+    key = "RL ESPORTS"
+    region = "Europe"
+    rn = utils.get_region_label(region)
+    base_path = os.path.join("RLCS 24", "Major 1", region, "Open Qualifiers 3", "Day 3 - Swiss Stage")
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": "ATTACKING STYLE COMPARISON",
-        "t2": "SALT MINE 3 EU & NA | STAGE 2 | TOP 8 PLAYERS",
-        "t3": "PLAYOFF GOALS SCORED",
+        "t2": f"RLCS {rn} | OQ 3 | SWISS",
+        "t3": "",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "c3": constants.TEAM_INFO[key]["c3"],
-        "img_name": os.path.join("Salt Mine 3", "scatter", "playoffs_goal_style.png")
+        "c3": constants.REGION_COLORS[rn][0],
+        "img_path": os.path.join("viz", "images", base_path)
     }
 
-    na_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - NA", "Playoffs")
-    eu_path = os.path.join("replays", "Salt Mine 3", "Stage 2", "Region - EU", "Playoffs")
-    na_game_list = utils.read_group_data(na_path)
-    eu_game_list = utils.read_group_data(eu_path)
-    create_image({"na": na_game_list, "eu": eu_game_list}, config)
+    game_list = utils.read_group_data(os.path.join("replays", base_path))
+    create_image({rn: game_list}, config)
     
     return 1
   

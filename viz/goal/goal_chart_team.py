@@ -37,33 +37,33 @@ def draw_goal(team_name, game_list):
     gp, solo, assisted, total = 0, 0, 0, 0
     player_map = {}
     for game in game_list:
-        active_teams = [team.name for team in game.teams]
+        active_teams = [utils.get_team_label(team.name) for team in game.teams]
         if team_name not in active_teams:
             continue
 
         gp += 1
-        team_goals = [goal for goal in game.game_metadata.goals if goal.team_name == team_name]
+        team_goals = [goal for goal in game.game_metadata.goals if utils.get_team_label(goal.team_name) == team_name]
         for goal in team_goals:
             if goal.scorer not in player_map:
                 players_seen = len(player_map.keys())
                 player_map[goal.scorer] = players_seen
 
-            if goal.assister == "":
+            if goal.assister != "":
                 assisted += 1
             else:
                 solo += 1
             total += 1
 
             team_color = constants.ORANGE_COLORS if goal.is_orange else constants.BLUE_COLORS
-            width = 4 if goal.assister == "" else 2
+            width = 4 if goal.assister != "" else 2
             if player_map[goal.scorer] == 0:
-                outline = BLACK if goal.assister == "" else team_color[0]
+                outline = BLACK if goal.assister != "" else team_color[0]
                 draw_marker(draw, goal.ball_pos, "C", height, outline=outline, fill=team_color[0], width=width)
             elif player_map[goal.scorer] == 1:
-                outline = BLACK if goal.assister == "" else team_color[1]
+                outline = BLACK if goal.assister != "" else team_color[1]
                 draw_marker(draw, goal.ball_pos, "S", height, outline=outline, fill=team_color[1], width=width)
             else:
-                outline = BLACK if goal.assister == "" else team_color[2]
+                outline = BLACK if goal.assister != "" else team_color[2]
                 draw_marker(draw, goal.ball_pos, "T", height, outline=outline, fill=team_color[2], width=width)
     
     if len(player_map.keys()) != 3:
@@ -122,7 +122,7 @@ def create_image(team_name: str, game_list, config):
     draw.text((legend_base_x + legend_len[0] + legend_len[1], get_y(legend_base_y, IMAGE_Y)), 
         legend_text[2], fill=(70,70,70), font=constants.BOUR_50)
     draw.regular_polygon((legend_base_x + legend_len[0] + legend_len[1] + 17, get_y(legend_base_y - 22, IMAGE_Y), 18), 3, 
-        fill=team_color[1], rotation=60)
+        fill=team_color[2], rotation=60)
     
     # Detail text on right
     padding = 97 if max(counts) < 10 else 113
@@ -141,23 +141,25 @@ def create_image(team_name: str, game_list, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", config["img_name"]))
+
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], f"{team_name}_goals.png"))
 
 def main():
-    team_name = "SHOPIFY"
-    key = "SHOPIFY REBELLION"
+    team_name = "KARMINE CORP"
+    key = "KARMINE CORP"
+    base_path = os.path.join("RLCS 24", "Major 1", "Europe", "Open Qualifiers 2", "Day 3 - Swiss Stage")
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": key,
-        "t2": "2PIECE | JUSTIN | PAARTH",
-        "t3": "GOAL PLACEMENT | OXG HOLIDAY INVITATIONAL | UBQF",
+        "t2": "ATOW | RISE | VATIRA",
+        "t3": "RLCS 24 EU OQ 2 | SWISS STAGE | GOAL PLACEMENT",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("OXG Holiday Inv", "goals", f"{key.lower()}_goals.png")
+        "img_path": os.path.join("viz", "images", base_path)
     }
 
-    data_path = os.path.join("replays", "OXG Inv", "R2 - HB vs SR")
-    game_list = utils.read_series_data(data_path)
+    game_list = utils.read_group_data(os.path.join("replays", base_path))
     create_image(team_name, game_list, config)
     
     return 1

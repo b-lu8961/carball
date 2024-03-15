@@ -4,7 +4,7 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw
 
-IMAGE_X, IMAGE_Y = 2400, 2400
+IMAGE_X, IMAGE_Y = 2400, 2250
 MARGIN = 40
 
 MARKER_SIZE = 20
@@ -22,56 +22,45 @@ def calculate_hit_maps(game_list):
     bounds_x = [(map_x / 6, map_x / 2), (-(map_x / 6), map_x / 6), (-(map_x / 2), -(map_x / 6))]
     bounds_y = [(-np.inf, -(map_y / 4)), (-(map_y / 4), 0), (0, map_y / 4), (map_y / 4, np.inf)]
     bounds_z = [(0, ball_height), (ball_height, goal_z), (goal_z, map_z)]
-    hit_locs = {"goals": {}, "shots": {}}
-    hit_locs_vert = {"goals": {}, "shots": {}}
-    totals = {"goals": [[0,0,0,0],[0,0,0,0],[0,0,0,0]], "shots": [[0,0,0,0],[0,0,0,0],[0,0,0,0]]}
-    totals_vert = {"goals": [[0,0,0,0],[0,0,0,0],[0,0,0,0]], "shots": [[0,0,0,0],[0,0,0,0],[0,0,0,0]]}
+    hit_locs, hit_locs_vert = {}, {}
+    totals = [0, 0]
     id_map = {}
     for game in game_list:
-        for player in game.players:
-            id_map[player.id.id] = player
-            if player.name not in hit_locs['goals']:
-                for key in hit_locs.keys():
-                    hit_locs[key][player.name] = [
+        if len(id_map.keys()) == 0:
+            for player in game.players:
+                id_map[player.id.id] = player.is_orange
+                if player.is_orange not in hit_locs:
+                    hit_locs[player.is_orange] = [
                         [0,0,0,0],
                         [0,0,0,0],
                         [0,0,0,0],
                     ]
-                    hit_locs_vert[key][player.name] = [
+                    hit_locs_vert[player.is_orange] = [
                         [0,0,0,0],
                         [0,0,0,0],
-                        [0,0,0,0]
+                        [0,0,0,0],
                     ]
-        for hit in [hit for hit in game.game_stats.hits if hit.match_shot or hit.match_goal]:
-            player = id_map[hit.player_id.id]
-            ball_x = -1 * hit.ball_data.pos_x if player.is_orange else hit.ball_data.pos_x
-            ball_y = -1 * hit.ball_data.pos_y if player.is_orange else hit.ball_data.pos_y
-            ball_z = hit.ball_data.pos_z
-            
+        for hit in game.game_stats.hits:
+            is_orange = id_map[hit.player_id.id]
+            ball_x, ball_y, ball_z = hit.ball_data.pos_x, hit.ball_data.pos_y, hit.ball_data.pos_z
+            if is_orange:
+                totals[1] += 1
+            else:
+                totals[0] += 1
+
             for i in range(len(bounds_y)):
                 if bounds_y[i][0] <= ball_y and ball_y < bounds_y[i][1]:
                     for j in range(len(bounds_x)):
                         if bounds_x[j][0] <= ball_x and ball_x < bounds_x[j][1]:
-                            if hit.match_shot:
-                                hit_locs["shots"][player.name][j][i] += 1
-                                totals["shots"][j][i] += 1
-                            if hit.match_goal:
-                                hit_locs["goals"][player.name][j][i] += 1
-                                totals["goals"][j][i] += 1
+                            hit_locs[is_orange][j][i] += 1
                             break
                     for k in range(len(bounds_z)):
                         if bounds_z[k][0] <= ball_z and ball_z < bounds_z[k][1]:
-                            if hit.match_shot:
-                                hit_locs_vert["shots"][player.name][k][i] += 1
-                                totals_vert["shots"][k][i] += 1
-                            if hit.match_goal:
-                                hit_locs_vert["goals"][player.name][k][i] += 1
-                                totals_vert["goals"][k][i] += 1
+                            hit_locs_vert[is_orange][k][i] += 1
                             break
                     break
-    
-    return (hit_locs, hit_locs_vert), (totals, totals_vert)
 
+    return hit_locs, hit_locs_vert, totals
 
 def draw_main(color_map, text_map):
     width, height = round(constants.MAP_Y) + (MARGIN * 4), round(constants.MAP_X) + (MARGIN * 2)
@@ -91,7 +80,7 @@ def draw_main(color_map, text_map):
     ]
     text_x = [
         MID_X - (1.5 * constants.MAP_Y_QUARTER), MID_X - (0.5 * constants.MAP_Y_QUARTER),
-        MID_X + (0.5 * constants.MAP_Y_QUARTER), MID_X + (1.5 * constants.MAP_Y_QUARTER) - 10
+        MID_X + (0.5 * constants.MAP_Y_QUARTER), MID_X + (1.5 * constants.MAP_Y_QUARTER)
     ]
     text_y = [get_y(MID_Y + constants.MAP_X_THIRD + 20, height), get_y(MID_Y + 20, height), get_y(MID_Y - constants.MAP_X_THIRD + 20, height)]
 
@@ -131,14 +120,9 @@ def draw_main(color_map, text_map):
                 ], fill=color_map[2][3])
             else:
                 draw.rectangle([(coords_x[j][0], coords_y[i][0]), (coords_x[j][1], coords_y[i][1])], fill=color_map[i][j])
+            draw.text((text_x[j] - (text_map[i][j]["len"] / 2), text_y[i]), text_map[i][j]["text"], fill=BLACK, font=constants.BOUR_40)
 
-    utils.draw_field_lines(draw, MARGIN, height, sections=True)        
-
-    for i in range(len(coords_y)):
-        for j in range(len(coords_x)):
-            draw.multiline_text((text_x[j] - (text_map[i][j]["len"] / 2), text_y[i] - 15), text_map[i][j]["text"], 
-                fill=BLACK, font=constants.BOUR_40, align="center")
-    
+    utils.draw_field_lines(draw, MARGIN, height, sections=True)
     return img
 
 def draw_vert(color_map, text_map):
@@ -176,34 +160,29 @@ def draw_vert(color_map, text_map):
     return img
 
 def draw_field(base_draw, game_list):
-    hit_locs, totals = calculate_hit_maps(game_list)
-    total_pcts = (
-        np.array(totals[0]['goals']) / np.array(totals[0]['shots']),
-        np.array(totals[1]['goals']) / np.array(totals[1]['shots'])
-    )
-    max_pct = max(np.max(total_pcts[0]), np.max(total_pcts[1]))
+    hit_locs, hit_locs_vert, totals = calculate_hit_maps(game_list)
 
+    diffs = (np.array(hit_locs[False]) - np.array(hit_locs[True]), np.array(hit_locs_vert[False]) - np.array(hit_locs_vert[True]))
+    max_diffs = (np.max(np.abs(diffs[0])) + 5, np.max(np.abs(diffs[1])) + 5)
     color_maps = ([], [])
     text_maps = ([], [])
-    for idx in range(len(total_pcts)):
-        diff = total_pcts[idx]
+    for idx in range(len(diffs)):
+        diff = diffs[idx]
         for i in range(len(diff)):
             row = diff[i]
             color_list = []
             text_list = []
             for j in range(len(row)):
                 val = row[j]
-                color_str = f"hsl(19, 82%, {100 - (45 * (val / max_pct))}%)"
+                if val < 0:
+                    color_str = f"hsl(19, 82%, {100 - (50 * ((-1 * val) / max_diffs[idx]))}%)"
+                else:
+                    color_str = f"hsl(205, 64%, {100 - (50 * (val / max_diffs[idx]))}%)"
                 color_list.append(color_str)
 
-                pct_map = total_pcts[idx]
-                if idx == 0:
-                    text = "N/A" if np.isnan(pct_map[i][j]) else "{:.1f}%\n({:d}/{:d})"\
-                        .format(100 * pct_map[i][j], totals[idx]["goals"][i][j], totals[idx]["shots"][i][j])
-                else:    
-                    text = "N/A" if np.isnan(pct_map[i][j]) else "{:.1f}% ({:d}/{:d})"\
-                        .format(100 * pct_map[i][j], totals[idx]["goals"][i][j], totals[idx]["shots"][i][j])
-                text_len = base_draw.textlength(text.split('\n')[0], font=constants.BOUR_40)
+                hit_map = hit_locs if idx == 0 else hit_locs_vert
+                text = f"{hit_map[False][i][j]}:{hit_map[True][i][j]}"
+                text_len = base_draw.textlength(text, font=constants.BOUR_40)
                 text_list.append({"text": text, "len": text_len})
             color_maps[idx].append(color_list)
             text_maps[idx].append(text_list)
@@ -211,10 +190,9 @@ def draw_field(base_draw, game_list):
     img_main = draw_main(color_maps[0], text_maps[0])
     img_vert = draw_vert(color_maps[1], text_maps[1])
 
-    return img_main, img_vert
+    return img_main, img_vert, totals
 
-
-def create_image(game_list, config):
+def create_image(team_names, game_list, config):
     img = Image.new(mode = "RGBA", size = (IMAGE_X, IMAGE_Y), color = WHITE)
     draw = ImageDraw.Draw(img)
     
@@ -225,39 +203,57 @@ def create_image(game_list, config):
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Main field image
-    img_main, img_vert = draw_field(draw, game_list)
+    img_main, img_vert, totals = draw_field(draw, game_list)
     field_left = round((IMAGE_X / 2) - (img_main.width / 2))
     field_right = round((IMAGE_X / 2) + (img_main.width / 2))
     img.paste(img_vert, (field_left, get_y(img_vert.height + (2 * MARGIN), IMAGE_Y)))
-    img.paste(img_main, (field_left, get_y(img_vert.height + img_main.height + 150 + (2 * MARGIN), IMAGE_Y)))
+    img.paste(img_main, (field_left, get_y(img_vert.height + img_main.height + (2 * MARGIN), IMAGE_Y)))
 
-    # Direction text
-    attack_text = "Attacking Direction"
-    attack_len = draw.textlength(attack_text, font=constants.BOUR_50)
-    draw.text(((IMAGE_X - attack_len) / 2, get_y(img_vert.height + img_main.height + 150 + (2.5 * MARGIN), IMAGE_Y)), 
-        f"{attack_text} >>", fill=DARK_GREY, font=constants.BOUR_50)
+    # Touch totals
+    total_len = draw.textlength(f"{totals[0]}:{totals[1]}", font=constants.BOUR_50)
+    blue_len = draw.textlength(str(totals[0]), font=constants.BOUR_50)
+    total_left = ((IMAGE_X - total_len) / 2) - 1
+    draw.text((total_left, get_y(img_main.height + img_vert.height + (2.5 * MARGIN), IMAGE_Y)), 
+        f"{totals[0]}", fill=constants.TEAM_INFO["RL ESPORTS"]["c1"], font=constants.BOUR_50)
+    draw.text((total_left + blue_len, get_y(img_main.height + img_vert.height + (2.5 * MARGIN), IMAGE_Y)), 
+        ":", fill=DARK_GREY, font=constants.BOUR_50)
+    draw.text((total_left + blue_len + 14, get_y(img_main.height + img_vert.height + (2.5 * MARGIN), IMAGE_Y)), 
+        f"{totals[1]}", fill=constants.TEAM_INFO["RL ESPORTS"]["c2"], font=constants.BOUR_50)
+
+    # Team names
+    for i in range(len(team_names)):
+        name_len = round(draw.textlength(team_names[i], font=constants.BOUR_100))
+        name_img = Image.new(mode="RGB", size=(name_len, 80), color=WHITE)
+        name_draw = ImageDraw.Draw(name_img)
+        name_key = "c1" if i == 0 else "c2"
+        name_rot = 90 if i == 0 else -90
+        x_pos = field_left - 60 if i == 0 else field_right - 20
+        name_draw.text((0,0), team_names[i], fill=constants.TEAM_INFO["RL ESPORTS"][name_key], font=constants.BOUR_100)
+        rot_img = name_img.rotate(name_rot, expand=True)
+        img.paste(rot_img, (x_pos, get_y(round(((img_main.height + (4 * MARGIN)) / 2) + (name_len / 2)) + img_vert.height, IMAGE_Y)))
 
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
     img.save(os.path.join("viz", "images", config["img_name"]))
 
+
 def main():
-    #player_name = "Chronic"
-    key = "THE DRAW"
+    team_names = ("TWISTED MINDS", "RULE ONE")
+    key = "RL ESPORTS"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": "THE DRAW #8",
-        "t2": "MAIN EVENT ",
-        "t3": "SHOOTING %",
+        "t1": f"{team_names[0]} 2 - 3 {team_names[1]}",
+        "t2": "RLCS 24 MAJOR 1 | MENA OQ 1 | SWISS R3",
+        "t3": "TOUCH DIFFERENTIALS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("The Draw", "shooting_comp", "thedraw_8_shooting_comp.png")
+        "img_name": os.path.join("RLCS 24", "MENA", "touches", f"{team_names[0].lower()}_{team_names[1].lower()}_touch_diff.png")
     }
 
-    data_path = os.path.join("replays", "The Draw", "Event 8")
-    game_list = utils.read_group_data(data_path)
-    create_image(game_list, config)
+    data_path = os.path.join("replays", "RLCS 24", "Major 1", "MENA", "OQ 1", "Swiss", "Round 3", "R1 vs TWIS")
+    game_list = utils.read_series_data(data_path)
+    create_image(team_names, game_list, config)
     
     return 1
   
