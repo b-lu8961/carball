@@ -255,7 +255,12 @@ class Player:
             self.data = pd.DataFrame.from_dict(_dict, orient='index')
         else:
             new_df = pd.DataFrame.from_dict(_dict, orient='index')
-            self.data.loc[new_df.index] = new_df
+            if 'pos_x' not in self.data and new_df.index[0] < 250:
+                self.data = new_df
+            elif 'pos_x' in new_df:
+                self.data.loc[new_df.index] = new_df
+            else:
+                pass
 
     def get_data_from_car(self, car_data):
         if car_data is None:

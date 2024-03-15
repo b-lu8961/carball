@@ -182,6 +182,8 @@ class Game:
         for _player_actor_id, _player_data in all_data['player_dicts'].items():
             if "TAGame.PRI_TA:MatchScore" not in _player_data:
                 logger.warning(f"Player {_player_data['name']} as player has no MatchScore.")
+            if "RLCS REFEREE" in _player_data['name']:
+                continue
 
             found_player = None
             for player in self.players:

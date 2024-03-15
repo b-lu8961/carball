@@ -46,9 +46,11 @@ class PickupAnalysis:
                 if np.isnan(data_frame['ball']['vel_x'].at[idx]):
                     # boost pickups after a goal is scored
                     continue
-                if label == 38:
-                    label = 40
-                boost_pad = [boost_pad for boost_pad in proto_game.game_stats.boost_pads if boost_pad.label == label][0]
+                try:
+                    boost_pad = [boost_pad for boost_pad in proto_game.game_stats.boost_pads if boost_pad.label == label][0]
+                except:
+                    new_label = cls.get_closest_label(player_vals_df, idx)
+                    boost_pad = [boost_pad for boost_pad in proto_game.game_stats.boost_pads if boost_pad.label == new_label][0]
                 seconds = data_frame['game']['seconds_remaining'].at[idx]
                 if 'is_overtime' in data_frame['game'] and data_frame['game']['is_overtime'].at[idx]:
                     seconds *= -1
@@ -59,6 +61,22 @@ class PickupAnalysis:
                 )
 
         return
+    
+    @classmethod
+    def get_closest_label(cls, player_vals_df, pickup_idx):
+        min_dist, new_label = None, None
+        for pos_data in PickupAnalysis.BIG_BOOST_POSITIONS:
+            dist = np.sqrt((pos_data[0] - player_vals_df['pos_x'].at[pickup_idx])**2 + (pos_data[1] - player_vals_df['pos_y'].at[pickup_idx])**2)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                new_label = pos_data[2]
+        for pos_data in PickupAnalysis.SMALL_BOOST_POSITIONS:
+            dist = np.sqrt((pos_data[0] - player_vals_df['pos_x'].at[pickup_idx])**2 + (pos_data[1] - player_vals_df['pos_y'].at[pickup_idx])**2)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                new_label = pos_data[2]
+        return new_label
+
 
     @classmethod
     def get_boost_collect(cls, player_vals_df):

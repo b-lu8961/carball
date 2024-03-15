@@ -209,6 +209,7 @@ class EventsCreator:
                     #print(idx, player.name, data_frame['game']['seconds_remaining'].at[idx])
                     close_hits = [hit for hit in proto_game.game_stats.hits if hit.frame_number >= (idx - 30) and hit.frame_number <= idx 
                         and hit.player_id.id != player.id.id]
+                    #hit_idx = min(idx, collision_distances.index[-1])
                     col_dists = collision_distances[(player.is_orange, player.name)].loc[(idx - 30):idx]
                     if len(close_hits) == 0:
                         # New hit
@@ -260,6 +261,10 @@ class EventsCreator:
 
                 if curr_player_hit is None or ((last_team_hit.player_id.id != curr_player.id.id) and \
                         (last_team_hit.frame_number - curr_player_hit.frame_number) >= 75):
+                    if len(last_team_hit_list) > 1 and last_team_hit_list[-2].player_id.id == curr_player.id.id \
+                            and abs(last_team_hit.frame_number - idx) < 15:
+                        continue
+
                     # Hit was misattributed; need to correct
                     last_team_frame = last_team_hit.frame_number
                     if last_team_hit.frame_number not in collision_distances.index:
@@ -283,7 +288,7 @@ class EventsCreator:
                             self.insert_hit(proto_game, data_frame, hits, new_hit_frame, curr_player, collision_distances)
                     else:
                         # Hit by teammate actually belongs to curr player
-                        #print("switch")
+                        #print("switch", last_team_frame, idx)
                         last_team_hit.player_id.id = curr_player.id.id
                         last_team_hit.collision_distance = collision_distances[curr_player.is_orange][curr_player.name].loc[last_team_frame]
 
@@ -338,6 +343,7 @@ class EventsCreator:
                     last_hit.match_assist = True
    
         # Delete team hits after a goal hit
+        #print([goal.frame_number for goal in proto_game.game_metadata.goals])
         goal_hits = [hit for hit in proto_game.game_stats.hits if hit.match_goal]
         for g_hit in goal_hits:
             goal_color = player_map[g_hit.player_id.id].is_orange
@@ -355,7 +361,7 @@ class EventsCreator:
                 if not curr_hit.match_goal:
                     hit_color = player_map[curr_hit.player_id.id].is_orange
                     if hit_color == goal_color:
-                        print("  delete", g_hit.frame_number, curr_hit.frame_number)
+                        print("  delete", g_hit.frame_number, curr_hit.frame_number, player_map[curr_hit.player_id.id].name)
                         if curr_hit.match_assist or curr_hit.match_shot:
                             #print(player_map[curr_hit.player_id.id])
                             prev_player_hit = [hit for hit in proto_game.game_stats.hits if hit.player_id.id == curr_hit.player_id.id 

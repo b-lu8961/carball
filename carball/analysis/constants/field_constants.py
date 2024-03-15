@@ -18,6 +18,7 @@ BALL_SIZE = 92.75
 HEIGHT_0_BALL_LIM = 95  # Height of ball when on ground
 HEIGHT_0_LIM = 20  # Height of car when on ground
 HEIGHT_1_LIM = 642.775  # Goal height
+HEIGHT_2_LIM = 1362.66 # Upper z-third
 
 MAP_THIRD = MAP_Y / 6
 
@@ -135,6 +136,9 @@ class FieldConstants:
     
     def get_height_2(self, player_data_frame, **kwargs):
         return (player_data_frame.pos_z > HEIGHT_1_LIM)
+    
+    def get_height_3(self, player_data_frame, **kwargs):
+        return (player_data_frame.pos_z > HEIGHT_2_LIM)
 
     def get_ball_0(self, player_data_frame, ball_data_frame):
         """Ball is closer to goal 0 than player"""

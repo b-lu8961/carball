@@ -30,7 +30,11 @@ class BaseHit:
         for team in game.teams:
             team_dict[team.is_orange] = team
 
+        #print([goal.frame_number for goal in proto_game.game_metadata.goals])
         hit_frame_numbers = BaseHit.get_hit_frame_numbers_by_ball_ang_vel(data_frame)
+        #hit_frame_numbers += [num for num in range(7303, 7333)]
+        #hit_frame_numbers.append(3290)
+        #hit_frame_numbers.remove(668)
         if len(hit_frame_numbers) == 0:
             return {}
 
@@ -134,6 +138,12 @@ class BaseHit:
                             collision_distances_data_frame.loc[idx, ('closest_player', 'distance')] = min_dist
                             break
                     
+        #print(collision_distances_data_frame.loc[3280:3300])
+        #collision_distances_data_frame.loc[3292, ('closest_player', 'name')] = 'Lunar'
+        #collision_distances_data_frame.loc[3292, ('closest_player', 'distance')] = 122.500
+        #collision_distances_data_frame.loc[8500, ('closest_player', 'name')] = 'Rw9'
+        #collision_distances_data_frame.loc[8500, ('closest_player', 'distance')] = 208.481
+
         hits_data = collision_distances_data_frame['closest_player'].dropna()
         if len(hits_data) > 1:
             hit_frames_to_keep = BaseHit.filter_out_duplicate_hits(hits_data)
@@ -141,6 +151,8 @@ class BaseHit:
 
         for row in hits_data.itertuples():
             frame_number, player_name, collision_distance = row.Index, row.name, row.distance
+            while frame_number not in data_frame.index:
+                frame_number -= 1
             hit = proto_game.game_stats.hits.add()
             hit.frame_number = frame_number
             game_info = data_frame.loc[frame_number, 'game']
@@ -246,6 +258,10 @@ class BaseHit:
         ball_ang_vels = ball_ang_vels_pre.sort_index()
         diff_series = (np.abs(ball_ang_vels.diff()) > 50).any(axis=1)
         diff_list = diff_series.index[diff_series].tolist()
+        ball_vel_y_pre = data_frame.ball.loc[:, 'vel_y']
+        ball_vel_y = ball_vel_y = ball_vel_y_pre.sort_index()
+        diff_2 = (np.abs(ball_vel_y.diff()) > 15000)
+        diff_list_2 = diff_2.index[diff_2].tolist()
         zeros = (ball_ang_vels == 0).all(axis=1)
         zero_list = zeros.index[zeros].tolist()
         indices = [idx for idx in diff_list if idx not in zero_list]
@@ -253,6 +269,9 @@ class BaseHit:
         hit_changes = hit_team_nos[hit_team_nos.diff().abs() > 0].index.tolist()
         for idx in hit_changes:
             if idx not in indices:
+                indices.append(idx)
+        for idx in diff_list_2:
+            if idx not in indices and abs(data_frame['ball']['vel_x'].at[idx]) > 0.01:
                 indices.append(idx)
         return indices
 

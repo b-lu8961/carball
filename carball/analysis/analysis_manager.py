@@ -57,7 +57,7 @@ class AnalysisManager:
         self.should_store_frames = False
         self.df_bytes = None
 
-    def create_analysis(self, calculate_intensive_events: bool = False, clean: bool = True):
+    def create_analysis(self, calculate_intensive_events: bool = False, clean: bool = True, tag = None):
         """
         Sets basic metadata, and decides whether analysis can be performed and then passes required parameters
         to perform_full_analysis(...); After, stores the DataFrame.
@@ -87,6 +87,8 @@ class AnalysisManager:
         # log before we add the dataframes
         # logger.debug(self.protobuf_game)
 
+        if tag is not None:
+            self.protobuf_game.game_metadata.tag = tag
         self._store_frames(data_frame)
 
     def write_json_out_to_file(self, file: IO):
@@ -298,6 +300,8 @@ class AnalysisManager:
             # happens when the game ends before anyone touches the ball at kickoff
             kickoff_frames = kickoff_frames[:len(first_touch_frames)]
 
+        if len(kickoff_frames) == 0:
+            kickoff_frames.append(120)
         for goal_number, goal in enumerate(game.goals):
             if kickoff_frames[goal_number] > goal.frame_number:
                 data_frame.loc[goal.frame_number : kickoff_frames[goal_number], ('game', 'goal_number')] = goal_number

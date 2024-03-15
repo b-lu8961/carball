@@ -76,7 +76,7 @@ def get_online_id_for_bot(bot_map, player):
     try:
         return 'b' + str(bot_map[player.name]) + 'b'
     except:
-        logger.warning(f'Found bot not in bot list: {player.name}')
+        logger.info(f'Found bot not in bot list: {player.name}')
         try:
             return 'b' + h11(str(player.name).encode('utf-8').lower()) + 'b'
         except:

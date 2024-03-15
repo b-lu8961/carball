@@ -23,6 +23,7 @@ class PositionalTendencies(BaseStat):
             "height_1": self.field_constants.get_height_1,
             "height_2_air": self.field_constants.get_height_2_airtime,
             "height_2": self.field_constants.get_height_2,
+            "height_3": self.field_constants.get_height_3,
             "half_0": self.field_constants.get_half_0,
             "half_1": self.field_constants.get_half_1,
             "third_0": self.field_constants.get_third_0,
@@ -41,6 +42,7 @@ class PositionalTendencies(BaseStat):
             "height_1": self.field_constants.get_height_1,
             "height_2_air": self.field_constants.get_height_2_airtime,
             "height_2": self.field_constants.get_height_2,
+            "height_3": self.field_constants.get_height_3,
             "half_0": self.field_constants.get_half_0,
             "half_1": self.field_constants.get_half_1,
             "third_0": self.field_constants.get_third_0,
@@ -117,7 +119,7 @@ class PositionalTendencies(BaseStat):
 
     @staticmethod
     def set_tendency_proto(proto: stats_pb2.PositionalTendencies, height_0: float, height_1_air: float, height_1: float, 
-                           height_2_air: float, height_2: float,
+                           height_2_air: float, height_2: float, height_3: float,
                            half_0: float, half_1: float,
                            third_0: float, third_1: float, third_2: float,
                            ball_0: float, ball_1: float,
@@ -146,6 +148,7 @@ class PositionalTendencies(BaseStat):
         proto.time_low = height_1
         proto.time_high_in_air = height_2_air
         proto.time_high = height_2
+        proto.time_upper_third = height_3
         proto.time_in_defending_half = half_0
         proto.time_in_attacking_half = half_1
         proto.time_in_defending_third = third_0

@@ -24,6 +24,7 @@ from carball.analysis.stats.dropshot.ball_phase_times import DropshotBallPhaseTi
 from carball.analysis.stats.dropshot.damage import DropshotStats
 from carball.analysis.stats.goals.goals import GoalStats
 from carball.analysis.stats.shot_details.shot_details import ShotDetailStats
+from carball.analysis.stats.saves.saves import SaveStat
 
 
 class StatsList:
@@ -85,5 +86,6 @@ class StatsList:
         return [
             GoalStats(),
             DemoStat(),
-            ShotDetailStats()
+            ShotDetailStats(),
+            SaveStat()
         ]

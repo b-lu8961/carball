@@ -22,6 +22,8 @@ class GoalStats(BaseStat):
             goal.is_orange = scorer.is_orange
             goal.team_name = team_names["orange"] if scorer.is_orange else team_names["blue"]
             
+            goal.blue_score = blue_goals
+            goal.orange_score = orange_goals
             is_go_ahead = (blue_goals == orange_goals)
             goal.is_go_ahead = is_go_ahead
             if not is_go_ahead:
@@ -51,7 +53,7 @@ class GoalStats(BaseStat):
                 goal.ball_pos.pos_x *= -1 
             
             offset = 1
-            while np.isnan(data_frame.loc[frame_num - offset, ('ball', 'vel_x')]):
+            while (frame_num - offset) not in data_frame.index or np.isnan(data_frame.loc[frame_num - offset, ('ball', 'vel_x')]):
                 offset += 1
             vel_data = tuple(data_frame.loc[frame_num - offset, ('ball', ['vel_x', 'vel_y', 'vel_z'])] / 10)
             goal.ball_vel.pos_x = vel_data[0]
@@ -62,8 +64,10 @@ class GoalStats(BaseStat):
             curr_frame = goal.frame_number
             off_half_time = 0
             while np.sign(data_frame['ball']['pos_y'].at[curr_frame]) == start_sign:
-                curr_frame -= 1
                 off_half_time += data_frame['game', 'delta'].at[curr_frame]
+                curr_frame -= 1
+                if np.abs(data_frame['ball']['vel_x'].at[curr_frame]) < 0.01:
+                    break
             goal.time_in_off_half = round(off_half_time, 3)
 
             num_touches = 0
@@ -94,7 +98,7 @@ class GoalStats(BaseStat):
                 assist_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number < goal_hit.frame_number
                     and hit.frame_number > start_frame and hit.match_assist]
             
-                if len(assist_hit) > 0:
+                if len(assist_hit) > 0 and player_map[assist_hit[0].player_id.id].is_orange == goal.is_orange:
                     goal.assister = player_map[assist_hit[0].player_id.id].name
                     assist_count += 1
                 else:

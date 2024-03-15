@@ -17,12 +17,16 @@ class ShotDetailStats(BaseStat):
     def calculate_stat(self, proto_stat, game: Game, proto_game: game_pb2.Game, player_map: Dict[str, Player], data_frame: pd.DataFrame):
         shots = [hit for hit in proto_game.game_stats.hits if hit.match_shot or hit.match_goal]
         for shot in shots:
+            offset = 0
+            while (shot.frame_number - offset) not in data_frame.index:
+                offset += 1
+
             shot_is_orange = player_map[shot.player_id.id].is_orange
             shot_data = proto_stat.shot_details.add(
                 distance = ShotDetailStats.get_dist_to_goal(shot.ball_data, shot_is_orange),
                 angle = ShotDetailStats.get_angle(shot, shot_is_orange),
                 z_angle = ShotDetailStats.get_z_angle(shot, shot_is_orange),
-                goalward_speed = ShotDetailStats.get_goalward_speed(data_frame, shot, player_map[shot.player_id.id]),
+                goalward_speed = ShotDetailStats.get_goalward_speed(data_frame, shot, player_map[shot.player_id.id], offset),
                 ball_speed = ShotDetailStats.get_ball_speed(shot),
                 prev_touch_type = ShotDetailStats.get_prev_touch_type(proto_game, shot, player_map),
                 is_goal = shot.match_goal,
@@ -31,7 +35,7 @@ class ShotDetailStats(BaseStat):
                 seconds_remaining = shot.seconds_remaining,
                 previous_hit_frame_number = shot.previous_hit_frame_number
             )
-            ball_frame = data_frame["ball"].loc[shot.frame_number]
+            ball_frame = data_frame["ball"].loc[shot.frame_number - offset]
             shot_data.ball_pos.pos_x = ball_frame["pos_x"]
             shot_data.ball_pos.pos_y = ball_frame["pos_y"]
             shot_data.ball_pos.pos_z = ball_frame["pos_z"]
@@ -40,7 +44,7 @@ class ShotDetailStats(BaseStat):
             shot_data.ball_vel.pos_z = ball_frame["vel_z"]
 
             for player in proto_game.players:
-                player_frame = data_frame[player.name].loc[shot.frame_number]
+                player_frame = data_frame[player.name].loc[shot.frame_number - offset]
                 if player.is_orange == shot_is_orange:
                     if player.id.id == shot.player_id.id:
                         ShotDetailStats.add_shooter(shot_data, player_frame)
@@ -49,23 +53,23 @@ class ShotDetailStats(BaseStat):
                 else:
                     ShotDetailStats.add_defender(shot_data, player_frame)
 
-            goalside, avg_def, min_def = ShotDetailStats.get_defender_metrics(proto_game, data_frame, shot, player_map)
+            goalside, avg_def, min_def = ShotDetailStats.get_defender_metrics(proto_game, data_frame, shot, player_map, offset)
             shot_data.goalside_defs = goalside
             shot_data.avg_def_goal_dist = avg_def
             shot_data.min_def_ball_dist = min_def
 
-            ball_sim = BallSimulator(data_frame["ball"].loc[shot.frame_number], shot_is_orange)
+            ball_sim = BallSimulator(data_frame["ball"].loc[shot.frame_number - offset], shot_is_orange)
             on_target = ball_sim.get_is_shot(get_sim_data=True)
             if not on_target and shot.match_goal:
                 shot_data.is_on_target = True
                 curr_frame = shot.frame_number
                 while (curr_frame + 1) in data_frame.index and not np.isnan(data_frame["ball"]["vel_x"].loc[curr_frame + 1]):
                     curr_frame += 1
-                shot_data.cross_pos.pos_x = data_frame["ball"]["pos_x"].loc[curr_frame]
-                shot_data.cross_pos.pos_y = data_frame["ball"]["pos_y"].loc[curr_frame]
-                shot_data.cross_pos.pos_z = data_frame["ball"]["pos_z"].loc[curr_frame]
+                shot_data.cross_pos.pos_x = data_frame["ball"]["pos_x"].loc[curr_frame - offset]
+                shot_data.cross_pos.pos_y = data_frame["ball"]["pos_y"].loc[curr_frame - offset]
+                shot_data.cross_pos.pos_z = data_frame["ball"]["pos_z"].loc[curr_frame - offset]
                 min_travel_dist = np.sqrt((shot_data.cross_pos.pos_x - ball_frame["pos_x"])**2 + (shot_data.cross_pos.pos_y - ball_frame["pos_y"])**2 + (shot_data.cross_pos.pos_z - ball_frame["pos_z"])**2)
-                travel_time = np.sum(data_frame["game"]["delta"].loc[shot.frame_number:curr_frame])
+                travel_time = np.sum(data_frame["game"]["delta"].loc[shot.frame_number - offset : curr_frame - offset])
                 shot_data.adj_vel = round(min_travel_dist / travel_time, 3)
             elif on_target:
                 shot_data.is_on_target = True
@@ -313,8 +317,8 @@ class ShotDetailStats(BaseStat):
         return round(abs(np.degrees(angle)), 3)
 
     @staticmethod
-    def get_goalward_speed(df, hit_data, player):
-        y_vel = df[player.name]["vel_y"].loc[hit_data.frame_number]
+    def get_goalward_speed(df, hit_data, player, offset):
+        y_vel = df[player.name]["vel_y"].loc[hit_data.frame_number - offset]
         y_vel = -1 * y_vel if player.is_orange else y_vel
         return round(y_vel, 3)
 
@@ -324,7 +328,7 @@ class ShotDetailStats(BaseStat):
         return round(np.sqrt(ball_x**2 + ball_y**2 + ball_z**2), 3)
 
     @staticmethod
-    def get_defender_metrics(pb, df, hit_data, player_map):
+    def get_defender_metrics(pb, df, hit_data, player_map, offset):
         shot_is_orange = player_map[hit_data.player_id.id].is_orange
         opp_players = [player.name for player in pb.players if player.is_orange != shot_is_orange]
         player_count, total_dist, min_dist, defender_count = 0, 0, np.inf, 0
@@ -332,7 +336,7 @@ class ShotDetailStats(BaseStat):
         
         for player in opp_players:
             #is_goalside = False
-            player_pos = df[[(player, "pos_x"), (player, "pos_y"), (player, "pos_z")]].loc[hit_data.frame_number]
+            player_pos = df[[(player, "pos_x"), (player, "pos_y"), (player, "pos_z")]].loc[hit_data.frame_number - offset]
             if np.isnan(player_pos[player]).any():
                 continue
                 

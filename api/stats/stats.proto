@@ -27,6 +27,7 @@ message PositionalTendencies {
     optional float time_on_wall = 13;
     optional float time_high = 14;
     optional float time_low = 15;
+    optional float time_upper_third = 16;
 }
 
 message Averages {

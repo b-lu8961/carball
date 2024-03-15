@@ -42,6 +42,7 @@ def get_invalid_players(proto_game: game_pb2.Game, data_frame: pd.DataFrame):
     for player in proto_game.players:
         name = player.name
         if player.time_in_game < 5 or name not in data_frame or ('pos_x' not in data_frame[name]):
+            print("  ", name, player.time_in_game)
             invalid_players.append(player.name)
 
     return invalid_players

@@ -54,6 +54,20 @@ message Goal {
     optional int32 cons_team_touches = 13;
     optional float time_in_off_half = 14;
     optional float time_after_kickoff = 15;
+
+    // Game score before goal goes in
+    optional int32 blue_score = 16;
+    optional int32 orange_score = 17;
+}
+
+message Save {
+    optional int32 frame_number = 1;
+    optional int32 seconds_remaining = 2;
+    optional string saver = 3;
+    optional string shooter = 4;
+    optional bool is_orange = 5;
+    optional int32 blue_score = 6;
+    optional int32 orange_score = 7;
 }
 
 message Demo {
@@ -89,4 +103,6 @@ message GameMetadata {
     repeated api.stats.ShotDetail shot_details = 20;
     optional int32 seconds = 21;
     optional sint32 last_second = 22;
+    optional string tag = 23;
+    repeated Save saves = 24;
 }
