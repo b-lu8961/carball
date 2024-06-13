@@ -10,6 +10,7 @@ MARKER_SIZE = 20
 MID_X, MID_Y = (constants.GOAL_X + (MARGIN * 4)) / 2, constants.GOAL_Z / 2
 
 WHITE, BLACK = (255,255,255), (0,0,0)
+LIGHT_GREY, DARK_GREY = (180,180,180), (70,70,70)
 
 def get_y(val, img_height):
     return img_height - val
@@ -36,47 +37,40 @@ def draw_goal(team_name, game_list):
 
     gp, solo, assisted, total = 0, 0, 0, 0
     player_map = {}
+    mark_types = ["C", "S", "T"]
     for game in game_list:
         active_teams = [utils.get_team_label(team.name) for team in game.teams]
         if team_name not in active_teams:
             continue
 
+        if len(player_map) == 0:
+            player_names = []
+            for player in game.players:
+                if utils.get_team_label(player.team_name) == team_name:
+                    player_names.append(utils.get_player_label(player.name))
+            names_sorted = sorted(player_names, key=str.casefold)
+            for i in range(len(names_sorted)):
+                player_map[names_sorted[i]] = i
+
         gp += 1
         team_goals = [goal for goal in game.game_metadata.goals if utils.get_team_label(goal.team_name) == team_name]
         for goal in team_goals:
-            if goal.scorer not in player_map:
-                players_seen = len(player_map.keys())
-                player_map[goal.scorer] = players_seen
-
+            scorer = utils.get_player_label(goal.scorer)
             if goal.assister != "":
                 assisted += 1
             else:
                 solo += 1
             total += 1
 
-            team_color = constants.ORANGE_COLORS if goal.is_orange else constants.BLUE_COLORS
-            width = 4 if goal.assister != "" else 2
-            if player_map[goal.scorer] == 0:
-                outline = BLACK if goal.assister != "" else team_color[0]
-                draw_marker(draw, goal.ball_pos, "C", height, outline=outline, fill=team_color[0], width=width)
-            elif player_map[goal.scorer] == 1:
-                outline = BLACK if goal.assister != "" else team_color[1]
-                draw_marker(draw, goal.ball_pos, "S", height, outline=outline, fill=team_color[1], width=width)
-            else:
-                outline = BLACK if goal.assister != "" else team_color[2]
-                draw_marker(draw, goal.ball_pos, "T", height, outline=outline, fill=team_color[2], width=width)
+            #team_color = constants.ORANGE_COLORS if goal.is_orange else constants.BLUE_COLORS
+            team_color = [constants.TEAM_INFO["G2 ESPORTS"]["c1"], constants.TEAM_INFO["G2 ESPORTS"]["c2"], constants.TEAM_INFO["G2 ESPORTS"]["c3"]]
+            fill_color = team_color[player_map[scorer]]
+            outline_color = WHITE if goal.assister == "" else team_color[player_map[utils.get_player_label(goal.assister)]]
+            width = 3 if goal.assister != "" else 0
+            draw_marker(draw, goal.ball_pos, mark_types[player_map[scorer]], height, outline=outline_color, fill=fill_color, width=width)
+            
     
-    if len(player_map.keys()) != 3:
-        players = [p.name for p in game.players if p.team_name == team_name]
-        for p in players:
-            if p not in player_map:
-                player_map[p] = len(player_map.keys())
-    players = (
-        [key for key, val in player_map.items() if val == 0][0],
-        [key for key, val in player_map.items() if val == 1][0],
-        [key for key, val in player_map.items() if val == 2][0],
-    )
-    return img, (gp, solo, assisted, total), players, team_color
+    return img, (gp, solo, assisted, total), list(player_map.keys()), team_color
   
 
 def create_image(team_name: str, game_list, config):
@@ -129,7 +123,7 @@ def create_image(team_name: str, game_list, config):
     draw.ellipse([
             (goal_img_width + padding - 50, get_y(goal_img_height - 382 + 70, IMAGE_Y)), 
             (goal_img_width + padding + 50, get_y(goal_img_height - 382 - 30, IMAGE_Y))
-        ], outline=BLACK, width=4)
+        ], outline=DARK_GREY, width=4)
 
     draw.multiline_text((goal_img_width + (2 * MARGIN), get_y(goal_img_height - (0.5 * MARGIN), IMAGE_Y)), 
         f"{counts[0]}\n\n\n{counts[1]}\n\n\n{counts[2]}\n\n\n{counts[3]}", fill=BLACK, font=constants.BOUR_60, align="center"
@@ -146,14 +140,14 @@ def create_image(team_name: str, game_list, config):
     img.save(os.path.join(config["img_path"], f"{team_name}_goals.png"))
 
 def main():
-    team_name = "KARMINE CORP"
-    key = "KARMINE CORP"
-    base_path = os.path.join("RLCS 24", "Major 1", "Europe", "Open Qualifiers 2", "Day 3 - Swiss Stage")
+    team_name = "G2 STRIDE"
+    key = "G2 ESPORTS"
+    base_path = os.path.join("RLCS 24", "Major 1", "[1] Major")
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": key,
-        "t2": "ATOW | RISE | VATIRA",
-        "t3": "RLCS 24 EU OQ 2 | SWISS STAGE | GOAL PLACEMENT",
+        "t2": "ATOMIC | BEASTMODE | DANIEL",
+        "t3": "RLCS 24 | MAJOR 1 | GOAL PLACEMENT",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
         "img_path": os.path.join("viz", "images", base_path)

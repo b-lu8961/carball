@@ -184,23 +184,25 @@ def create_image(team_names, game_list, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", config["img_name"]))
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], "touch_timelines.png"))
 
 def main():
-    team_names = ("KARMINE CORP", "ENDPOINT CEX")
-    team_keys = ("KARMINE CORP", "ENDPOINT")
+    team_names = ("OG", "REBELLION")
+    team_keys = ("OG", "REBELLION")
     event = "RL ESPORTS"
+    base_path = os.path.join("RLCS 24", "Major 2", "[1] Major", "Tiebreaker", "OG vs SR")
     config = {
         "logo": constants.TEAM_INFO[event]["logo"],
-        "t1": f"{team_keys[0]} 4 - 0 {team_keys[1]}",
-        "t2": "RLCS 24 EU | OQ 1 | QUARTERFINAL",
+        "t1": f"{team_keys[0]} 4 - 3 {team_keys[1]}",
+        "t2": "RLCS 24 NA | MAJOR 2 | TIEBREAKER",
         "t3": "TOUCH TIMELINES",
         "c1": constants.TEAM_INFO[event]["c1"],
         "c2": constants.TEAM_INFO[event]["c2"],
-        "img_name": os.path.join("RLCS 24", "EU", "touches", f"{team_names[0].lower()}_{team_names[1].lower()}_touch_timeline.png")
+        "img_path": os.path.join("viz", "images", base_path, "touches")
     }
 
-    data_path = os.path.join("replays", "RLCS 24", "Major 1", "Europe", "Open Qualifiers 1", "Day 4 - Single Elimination Stage", "KC vs END")
+    data_path = os.path.join("replays", base_path)
     game_list = utils.read_series_data(data_path)
     create_image(team_names, game_list, config)
     

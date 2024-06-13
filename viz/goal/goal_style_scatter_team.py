@@ -52,7 +52,7 @@ def calculate_metrics(game_lists):
 
 def draw_scatter(game_lists, config):
     metrics, totals = calculate_metrics(game_lists)
-    print(len(metrics))
+    #print(len(metrics))
     ko_med_list = [round(np.median(metrics[name]["time_after_ko"]), 3) for name in metrics]
     oh_med_list = [round(np.median(metrics[name]["time_in_off_half"]), 3) for name in metrics]
     # for name in sorted(metrics):
@@ -62,13 +62,13 @@ def draw_scatter(game_lists, config):
     #         "{:<7}".format(round(np.median(metrics[name]["time_after_ko"]), 3)),
     #         round(np.median(metrics[name]["time_in_off_half"]), 3)
     #     )
-    print(metrics["KARMINE CORP"])
+    #print(metrics["KARMINE CORP"])
     bounds_x = (min(ko_med_list) - 1, max(ko_med_list) + 1)
     bounds_y = (min(oh_med_list) - 1, max(oh_med_list) + 1)
 
     ax_pad = 5 * MARGIN
     tick_px_x, tick_px_y = 300, 250
-    tick_jump_x, tick_jump_y = 2, 1
+    tick_jump_x, tick_jump_y = 5, 1
     plot_width = round((bounds_x[1] - bounds_x[0]) / tick_jump_x) * tick_px_x
     plot_height = round((bounds_y[1] - bounds_y[0]) / tick_jump_y) * tick_px_y
     width, height = plot_width + ax_pad + MARGIN, plot_height + ax_pad + MARGIN
@@ -80,9 +80,9 @@ def draw_scatter(game_lists, config):
     ], fill=LIGHT_GREY, width=6)
     
     # X-axis
-    x_label_len = draw.textlength("Time after Kickoff  (s)", font=constants.BOUR_60)
+    x_label_len = draw.textlength("Seconds after Kickoff", font=constants.BOUR_60)
     draw.text((ax_pad + (plot_width / 2) - (x_label_len / 2), get_y(ax_pad - (2 * MARGIN), height)), 
-        "Time after Kickoff  (s)", fill=DARK_GREY, font=constants.BOUR_60)
+        "Seconds after Kickoff", fill=DARK_GREY, font=constants.BOUR_60)
     for i in range(int(np.ceil(bounds_x[0])), int(bounds_x[1]) + 1, tick_jump_x):
         num_len = draw.textlength(str(i), font=constants.BOUR_40)
         pos_x = ax_pad + (((i - bounds_x[0]) / (bounds_x[1] - bounds_x[0])) * plot_width)
@@ -97,7 +97,7 @@ def draw_scatter(game_lists, config):
     img.paste(y_label_rot, (ax_pad - int((3.5 * MARGIN)), get_y(ax_pad + int(plot_height / 2) + int(y_label_len / 2), height)))
     for i in range(int(np.ceil(bounds_y[0])), int(bounds_y[1]) + 1, tick_jump_y):
         pos_y = get_y(ax_pad + (((i - bounds_y[0]) / (bounds_y[1] - bounds_y[0])) * plot_height), height)
-        draw.text((ax_pad - (1 * MARGIN), pos_y - 20), str(i), fill=DARK_GREY, font=constants.BOUR_40)
+        draw.text((ax_pad - (1 * MARGIN), pos_y - 20), str(i), fill=DARK_GREY, font=constants.BOUR_40, anchor="ma")
 
     # Plot elements
     # Top left style label
@@ -132,9 +132,12 @@ def draw_scatter(game_lists, config):
         val_x, val_y = np.median(metrics[name]["time_after_ko"]), np.median(metrics[name]["time_in_off_half"])
         pos_x = ax_pad + (((val_x - bounds_x[0]) / (bounds_x[1] - bounds_x[0])) * plot_width)
         pos_y = get_y(ax_pad + (((val_y - bounds_y[0]) / (bounds_y[1] - bounds_y[0])) * plot_height), height)
-        color = constants.REGION_COLORS[metrics[name]["region"]][0]
+        reg = utils.get_region_from_team(name) #metrics[name]["region"]
+        color = constants.REGION_COLORS[reg][0]
         draw.ellipse([(pos_x - radius, pos_y - radius), (pos_x + radius, pos_y + radius)], fill=color)
         name_len = draw.textlength(name, font=constants.BOUR_30)
+        if name == "ELEVATE":
+            name_len = -50
         draw.text((pos_x - name_len - (1.5 * radius), pos_y - (1 * radius)), name, fill=BLACK, font=constants.BOUR_30)
 
     return img
@@ -163,13 +166,13 @@ def create_image(game_lists, config):
 
 def main():
     key = "RL ESPORTS"
-    region = "Europe"
-    rn = utils.get_region_label(region)
-    base_path = os.path.join("RLCS 24", "Major 1", region, "Open Qualifiers 3", "Day 3 - Swiss Stage")
+    region = "[1] Major"
+    rn = "EU" #utils.get_region_label(region)
+    base_path = os.path.join("RLCS 24", "Major 1", region)
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": "ATTACKING STYLE COMPARISON",
-        "t2": f"RLCS {rn} | OQ 3 | SWISS",
+        "t2": f"RLCS 24 MAJOR 1",
         "t3": "",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
@@ -180,7 +183,7 @@ def main():
     game_list = utils.read_group_data(os.path.join("replays", base_path))
     create_image({rn: game_list}, config)
     
-    return 1
+    return 0
   
 if __name__ == "__main__":
     main()

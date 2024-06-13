@@ -29,11 +29,8 @@ def calculate_hit_maps(game_list):
     id_map = {}
     for game in game_list:
         for player in game.players:
-            #print(player.name)
             id_map[player.id.id] = player
-            name_key = player.name if not player.name.startswith("G2 Stride ") else player.name.replace("G2 Stride ", "")
-            if name_key == "BMO":
-                name_key = "BeastMode"
+            name_key = utils.get_player_label(player.name)
             if name_key not in hit_locs['goals']:
                 for key in hit_locs.keys():
                     hit_locs[key][name_key] = [
@@ -51,9 +48,7 @@ def calculate_hit_maps(game_list):
             ball_x = -1 * hit.ball_data.pos_x if player.is_orange else hit.ball_data.pos_x
             ball_y = -1 * hit.ball_data.pos_y if player.is_orange else hit.ball_data.pos_y
             ball_z = hit.ball_data.pos_z
-            name_key = player.name if not player.name.startswith("G2 Stride ") else player.name.replace("G2 Stride ", "")
-            if name_key == "BMO":
-                name_key = "BeastMode"
+            name_key = utils.get_player_label(player.name)
 
             for i in range(len(bounds_y)):
                 if bounds_y[i][0] <= ball_y and ball_y < bounds_y[i][1]:
@@ -303,23 +298,26 @@ def create_image(player_name, game_list, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", config["img_name"]))
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], f"{player_name}_shoot_comp.png"))
 
 def main():
     player_name = "Daniel"
-    key = "SOLO Q"
+    key = "G2 ESPORTS"
+
+    base_path = os.path.join("RLCS 24", "Major 1", "[1] Major")
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": "DANIEL",
-        "t2": "SOLO Q | LAN",
-        "t3": "",
+        "t1": utils.get_player_label(player_name).upper(),
+        "t2": key,
+        "t3": "RLCS 24 | MAJOR 1 | SHOOTING %",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("Solo Q", "shooting_comp", "daniel_shooting_comp_lan.png")
+        "img_path": os.path.join("viz", "images", base_path)
     }
 
-    data_path = os.path.join("replays", "Solo Q", "LAN")
-    game_list = utils.read_group_data(data_path)
+    
+    game_list = utils.read_group_data(os.path.join("replays", base_path))
     create_image(player_name, game_list, config)
     
     return 1

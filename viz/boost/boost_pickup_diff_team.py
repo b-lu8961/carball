@@ -119,11 +119,13 @@ def create_image(team_names, game_list, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
     
-    img.save(os.path.join("viz", "images", config["img_name"]))
+    os.makedirs(config["img_path"], exist_ok=True)
+    img.save(os.path.join(config["img_path"], "pickup_diff.png"))
 
 def main():
     team_names = ("FALCONS", "FEARLESS")
     key = "RL ESPORTS"
+    base_path = os.path.join("RLCS 24", "Major 1", "Middle East & North Africa", "Open Qualifiers 1", "Day 3 - Swiss Stage", "Round 3", "FEAR vs FLCN")
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": f"{team_names[0]} 3 - 0 {team_names[1]}",
@@ -131,10 +133,10 @@ def main():
         "t3": "BOOST PICKUPS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("RLCS 24", "MENA",  "boost", f"{team_names[0].lower()}_{team_names[1].lower()}_boost.png")
+        "img_path": os.path.join("viz", "images", base_path)
     }
 
-    data_path = os.path.join("replays", "RLCS 24", "Major 1", "MENA", "OQ 1", "Swiss", "Round 3", "FEAR vs FLCN")
+    data_path = os.path.join("replays", base_path)
     game_list = utils.read_series_data(data_path)
     create_image(team_names, game_list, config)
     
