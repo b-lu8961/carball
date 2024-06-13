@@ -1,11 +1,14 @@
 from PIL import ImageFont
 
 BOUR_100 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 100)
+BOUR_90 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 90)
 BOUR_80 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 80)
+BOUR_70 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 70)
 BOUR_60 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 60)
 BOUR_50 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 50)
 BOUR_40 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 40)
 BOUR_30 = ImageFont.truetype("C:\\Users\\blu89\\Downloads\\Bourgeois Bold\\Bourgeois Bold.otf", 30)
+ARIAL = ImageFont.truetype("arial.ttf", 25)
 
 # Goal dimensions
 # blue goal -> negative y; orange goal -> positive y
@@ -91,13 +94,13 @@ ORANGE_COLORS = [(color[2], color[1], color[0]) for color in BLUE_COLORS]
 COLOR_MAP = {'blue': BLUE_COLORS, 'orange': ORANGE_COLORS}
 
 REGION_COLORS = {
-    "APAC": [(143, 0, 255), (103, 0, 255)],
-    "EU": [(78, 159, 216), (44, 131, 194)],
-    "MENA": [(0, 166, 79), (0, 123, 58)],
-    "NA": [(236, 114, 57), (211, 83, 20)],
-    "OCE": [(0, 235, 235), (0, 213, 213)],
-    "SAM": [(244, 214, 0), (225, 198, 0)],
-    "SSA": [(228, 20, 30), (188, 20, 30)],
+    "APAC": [(244, 214, 0), (225, 198, 0), "hsl(53, 64%, {}%)"], # yellow
+    "EU": [(78, 159, 216), (44, 131, 194), "hsl(205, 64%, {}%)"], # blue
+    "MENA": [(0, 166, 79), (0, 123, 58)], # green
+    "NA": [(236, 114, 57), (211, 83, 20), "hsl(19, 64%, {}%)"], # orange
+    "OCE": [(143, 0, 255), (103, 0, 255), "hsl(274, 64%, {}%)"], # purple
+    "SAM": [(0, 235, 235), (0, 213, 213), "hsl(180, 64%, {}%)"], # cyan
+    "SSA": [(228, 20, 30), (188, 20, 30)], # red
 }
 
 TEAM_INFO = {
@@ -107,11 +110,17 @@ TEAM_INFO = {
         "c2": (165, 165, 165),
         "c3": (255, 255, 255)
     },
-    "FEARLESS": {
-        "logo": "default.png",
-        "c1": (3, 123, 213),
-        "c2": (165, 165, 165),
-        "c3": (255, 255, 255)
+    "NIGHT RAVENS": {
+        "logo": "Night_Ravens.png",
+        "c1": (3, 3, 3),
+        "c2": (173, 162, 177),
+        "c3": (221, 20, 20)
+    },
+    "SHORTIES": {
+        "logo": "Shorties.png",
+        "c1": (0, 162, 232),
+        "c2": (34, 177, 76),
+        "c3": (237, 28, 36)
     },
     # Events
     "RL ESPORTS": {
@@ -161,6 +170,12 @@ TEAM_INFO = {
         "c1": (224, 72, 38),
         "c2": (249, 161, 27),
         "c3": (255, 255, 255)
+    },
+    "STAR CHASERS": {
+        "logo": "Raidiant_Star_Chasers.png",
+        "c1": (254, 198, 221),
+        "c2": (48, 9, 66),
+        "c3": (37, 180, 162)
     },
     # Countries
     "BRAZIL" : {
@@ -230,7 +245,7 @@ TEAM_INFO = {
         "c2": (16, 60, 123),
         "c3": (255, 255, 255)
     },
-    "GENTLEMATES": {
+    "GENTLE MATES": {
         "logo": "gentlemates.png",
         "c1": (236, 121, 224),
         "c2": (197, 244, 77),
@@ -254,6 +269,18 @@ TEAM_INFO = {
         "c2": (118, 188, 69),
         "c3": (34, 31, 31)
     },
+    "MAGNIFICO": {
+        "logo": "magnifico.png",
+        "c1": (6, 5, 25),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
+    },
+    "MOIST ESPORTS": {
+        "logo": "moist_esports.png",
+        "c1": (0, 163, 231),
+        "c2": (0, 0, 0),
+        "c3": (255, 255, 255)
+    },
     # NA
     "DELETED XD": {
         "logo": "deleted_xd.png",
@@ -271,9 +298,9 @@ TEAM_INFO = {
         "logo": "g2_esports.png",
         "c1": (0, 0, 0),
         "c2": (239, 61, 35),
-        "c3": (255, 255, 255)
+        "c3": (30, 46, 125)
     },
-    "GEN G": {
+    "GEN.G": {
         "logo": "geng.png",
         "c1": (165, 135, 33),
         "c2": (0, 0, 0),
@@ -315,7 +342,7 @@ TEAM_INFO = {
         "c2": (239, 176, 66),
         "c3": (255, 255, 255)
     },
-    "SHOPIFY REBELLION": {
+    "REBELLION": {
         "logo": "shopify_rebellion.png",
         "c1": (73, 73, 73),
         "c2": (149, 191, 71),
@@ -342,9 +369,9 @@ TEAM_INFO = {
     },
     "RULE ONE": {
         "logo": "rule_one.png",
-        "c1": (252, 35, 0),
-        "c2": (240, 358, 0),
-        "c3": (23, 218, 26)
+        "c1": (242, 117, 69),
+        "c2": (240, 73, 78),
+        "c3": (23, 26, 31)
     },
     "TWISTED MINDS": {
         "logo": "twisted_minds.png",
@@ -387,7 +414,13 @@ TEAM_INFO = {
         "logo": "team_secret.png",
         "c1": (0, 0, 0),
         "c2": (255, 255, 255),
-        "c3": (17, 17, 17)
+        "c3": (150, 251, 21)
+    },
+    "TRUE NEUTRAL": {
+        "logo": "True_Neutral.png",
+        "c1": (30, 30, 30),
+        "c2": (130, 130, 130),
+        "c3": (230, 230, 230)
     },
     # APAC
     "ELEVATE": {
@@ -419,7 +452,7 @@ TEAM_INFO = {
         "logo": "chiefs.png",
         "c1": (59, 150, 215),
         "c2": (245, 245, 245),
-        "c3": (0, 0, 0)
+        "c3": (11, 14, 21)
     },
     "GROUND ZERO": {
         "logo": "ground_zero.png",
@@ -433,5 +466,11 @@ TEAM_INFO = {
         "c1": (0, 0, 0),
         "c2": (64, 182, 254),
         "c3": (166, 230, 255)
+    },
+    "TEAM MOBULA": {
+        "logo": "team_mobula.jpg",
+        "c1": (0, 0, 0),
+        "c2": (255, 255, 255),
+        "c3": (225, 57, 45)
     }
 }

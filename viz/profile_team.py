@@ -35,8 +35,9 @@ def calculate_hit_maps(data_path, config):
     for_totals = {"goals": [[0,0,0,0],[0,0,0,0],[0,0,0,0]], "shots": [[0,0,0,0],[0,0,0,0],[0,0,0,0]]}
     against_totals = {"goals": [[0,0,0,0],[0,0,0,0],[0,0,0,0]], "shots": [[0,0,0,0],[0,0,0,0],[0,0,0,0]]}
     
-    
     game_list = utils.read_group_data(data_path)
+    score_first_rec = [0, 0]
+    conc_first_rec = [0, 0]
     for game in game_list:
         t0, t1 = utils.get_team_label(game.teams[0].name, config["region"]), utils.get_team_label(game.teams[1].name, config["region"])
         if config["key"] not in [t0, t1]:
@@ -46,6 +47,19 @@ def calculate_hit_maps(data_path, config):
             for_team, against_team = game.teams[0], game.teams[1]
         else:
             for_team, against_team = game.teams[1], game.teams[0]
+
+        if len(game.game_metadata.goals) > 0 and game.game_metadata.last_second <= 1:
+            first_goal = game.game_metadata.goals[0]
+            if first_goal.is_orange == for_team.is_orange:
+                if for_team.score > against_team.score:
+                    score_first_rec[0] += 1
+                else:
+                    score_first_rec[1] += 1
+            if first_goal.is_orange == against_team.is_orange:
+                if for_team.score > against_team.score:
+                    conc_first_rec[0] += 1
+                else:
+                    conc_first_rec[1] += 1
         
         for shot in game.game_metadata.shot_details:
             if shot.is_orange == for_team.is_orange:
@@ -67,7 +81,7 @@ def calculate_hit_maps(data_path, config):
                             break
                     break
     
-    return (for_totals, against_totals)
+    return (for_totals, against_totals), (score_first_rec, conc_first_rec)
         
 def draw_fields_alt(data_path, config):
     width, height = round(constants.MAP_Y) + (MARGIN * 4), round(constants.MAP_X) + (MARGIN * 2)
@@ -176,7 +190,7 @@ def draw_heat_map(img, draw, color_map, text_map):
             x_pad = -40 if len(text_map[i][j]["text"].split('\n')) > 1 else -60
             img.paste(lbl_rot, (round(text_x[j] + x_pad), round(text_y[i] - (lbl_img.width / 2) + 20)), mask=lbl_rot)
 
-def draw_fields(data_path, config):
+def draw_fields(totals):
     width, height = round(constants.MAP_Y) + (MARGIN * 4), round(constants.MAP_X) + (MARGIN * 2)
     for_img = Image.new(mode="RGBA", size = (width, height), color=WHITE)
     for_draw = ImageDraw.Draw(for_img)
@@ -184,12 +198,11 @@ def draw_fields(data_path, config):
     against_img = Image.new(mode="RGBA", size = (width, height), color=WHITE)
     against_draw = ImageDraw.Draw(against_img)
 
-    totals = calculate_hit_maps(data_path, config)
     total_pcts = (
         np.array(totals[0]['goals']) / np.array(totals[0]['shots']),
         np.array(totals[1]['goals']) / np.array(totals[1]['shots'])
     )
-    max_pcts = [np.nanmax(total_pcts[0]), np.nanmax(total_pcts[1])]
+    max_pcts = [np.nanmax([pct for pct in np.nditer(total_pcts[0]) if pct != 1]), np.nanmax([pct for pct in np.nditer(total_pcts[1]) if pct != 1])]
     color_maps = ([], [])
     text_maps = ([], [])
     for idx in range(len(total_pcts)):
@@ -200,6 +213,8 @@ def draw_fields(data_path, config):
             text_list = []
             for j in range(len(row)):
                 val = row[j]
+                if val == 1:
+                    val = max_pcts[idx]
                 if np.isnan(val):
                     color_str = (200, 200, 200)
                 else:
@@ -232,7 +247,7 @@ def draw_header(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config):
     pos = (MARGIN, MARGIN + 25)
     logo_width = None
     with Image.open(os.path.join("viz", "images", "logos", config["logo"])) as logo:
-        divisor = max(logo.width / 300, logo.height / 375)
+        divisor = max(logo.width / 300, logo.height / 300)
         logo_width, logo_height = round(logo.width / divisor), round(logo.height / divisor)
         logo_small = logo.resize((logo_width, logo_height))
         try:
@@ -249,7 +264,7 @@ def draw_header(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config):
     # Dotted circle logo
     utils.draw_dotted_circle(draw, img.width, MARGIN, config["c1"], config["c2"])
 
-def draw_layer_1(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config):
+def draw_layer_1(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, rec_data, config):
     LAYER_1_TOP = HEADER_HEIGHT
     img_14 = img.width / 4
 
@@ -258,17 +273,21 @@ def draw_layer_1(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config)
     ovw_base_y, ovw_step = LAYER_1_TOP + 140, 250
     draw.text(((ovw_left + ovw_right) / 2, LAYER_1_TOP), "Overview", fill=BLACK, font=constants.BOUR_90, anchor="ma")
 
-    labels = ["Seed:", "Record:", "Placements:", "Points:"]
+    labels = ["Seed:", "Record:", "Score First | Concede First", "Placements:"]
     record_str = "{} - {}  ".format(stat_data[config["key"]]["record"][0], stat_data[config["key"]]["record"][1])
+    score_first_str = "{} - {}   |   {} - {}".format(rec_data[0][0], rec_data[0][1], rec_data[1][0], rec_data[1][1])
     pct_str = "({:.1f}%)".format(100 * stat_data[config["key"]]["record"][0] / sum(stat_data[config["key"]]["record"]))
     vals = [
-        "{} {}".format(config["region"], config["seed"]),
+        "{} {}  ({} pts)".format(config["region"], config["seed"], config["points"]),
         record_str + pct_str,
+        score_first_str,
         config["placements"],
-        str(config["points"])
     ]
     for i in range(len(labels)):
-        draw.text((ovw_left + MARGIN, ovw_base_y + (i * ovw_step)), labels[i], fill=DARK_GREY, font=constants.BOUR_70)
+        if i == 2:
+            draw.text((ovw_left + (3 * MARGIN), ovw_base_y + (i * ovw_step)), labels[i], fill=DARK_GREY, font=constants.BOUR_60)
+        else:
+            draw.text((ovw_left + MARGIN, ovw_base_y + (i * ovw_step)), labels[i], fill=DARK_GREY, font=constants.BOUR_70)
         draw.text((ovw_left + (3 * MARGIN), ovw_base_y + (i * ovw_step) + 110), vals[i], fill=BLACK, font=constants.BOUR_80)
 
     draw.rounded_rectangle([(ovw_left - 30, ovw_base_y - 20), (ovw_right, LAYER_1_TOP + LAYER_1_HEIGHT - 108)], 75,
@@ -323,11 +342,11 @@ def get_rot_text(draw, text, font=constants.BOUR_60, height=50, fill=BLACK, rot=
     img_draw.text((0, 0), text, fill=fill, font=font)
     return img.rotate(rot, expand=True), img_len
 
-def draw_layer_2(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config, data_path):
+def draw_layer_2(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, totals, config):
     LAYER_2_TOP = HEADER_HEIGHT + LAYER_1_HEIGHT
     img_24 = img.width / 2
     
-    for_img, against_img = draw_fields(data_path, config)
+    for_img, against_img = draw_fields(totals)
     # Left field: shots taken
     for_rot = for_img.rotate(90, expand=True)
     for_left = int(1.5 * MARGIN)
@@ -359,7 +378,8 @@ def draw_layer_2(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config,
         name_y = name_base + (step * i)
         line_top, line_bot = name_y + 100, name_y + 330
 
-        draw.multiline_text((img_24, name_y), f"{p1}\n\n\n\n\n{p2}", fill=DARK_GREY, font=constants.BOUR_80, anchor="ma", align="center")
+        draw.multiline_text((img_24, name_y), f"{utils.get_player_label(p1)}\n\n\n\n\n{utils.get_player_label(p2)}", 
+            fill=DARK_GREY, font=constants.BOUR_80, anchor="ma", align="center")
         for combo in combo_data:
             assister, scorer = combo.split("->")
             if p1 == assister and p2 == scorer:
@@ -478,9 +498,9 @@ def draw_layer_4(img: Image.Image, draw: ImageDraw.ImageDraw, stat_data, config)
     draw.text((img.width / 2, LAYER_4_TOP), "Player Contributions", fill=BLACK, font=constants.BOUR_90, anchor="ma")
 
     # Player legend
-    part_1 = "          - {}   |".format(player_names[0])
-    part_2 = "          - {}   |".format(player_names[1])
-    part_3 = "          - {}".format(player_names[2])
+    part_1 = "          - {}   |".format(utils.get_player_label(player_names[0]))
+    part_2 = "          - {}   |".format(utils.get_player_label(player_names[1]))
+    part_3 = "          - {}".format(utils.get_player_label(player_names[2]))
     len_1 = draw.textlength(part_1, font=constants.BOUR_80)
     len_2 = draw.textlength(part_2, font=constants.BOUR_80)
     len_3 = draw.textlength(part_3, font=constants.BOUR_80)
@@ -545,33 +565,35 @@ def create_image(config, team_name, data_path):
     draw = ImageDraw.Draw(img)
     
     stat_data = json.load(open("stats.json", "r"))
+    totals, rec_data = calculate_hit_maps(data_path, config)
+    #print(sorted(stat_data.keys()))
     draw_header(img, draw, stat_data, config)
-    draw_layer_1(img, draw, stat_data, config)
-    draw_layer_2(img, draw, stat_data, config, data_path)
+    draw_layer_1(img, draw, stat_data, rec_data, config)
+    draw_layer_2(img, draw, stat_data, totals, config)
     draw_layer_3(img, draw, stat_data, config)
     draw_layer_4(img, draw, stat_data, config)
     
     os.makedirs(config['img_path'], exist_ok=True)
-    img.save(os.path.join(config["img_path"], f"{team_name}.png"))
+    img.save(os.path.join(config["img_path"], f"{team_name.replace(' ', '_').replace('.', '_')}.png"))
 
 def main():
-    key, team_name = "LIMITLESS", "LIMITLESS"
-    region = "Sub-Saharan Africa"
-    base_path = os.path.join("RLCS 24", "Major 1")
+    key, team_name = "OXYGEN ESPORTS", "OXYGEN ESPORTS"
+    region = "Europe"
+    base_path = os.path.join("RLCS 24", "Major 2")
     data_path = os.path.join("replays", base_path, region)
     
     config = {
-        "logo": constants.TEAM_INFO[key]["logo"],
+        "logo": constants.TEAM_INFO[team_name]["logo"],
         "t1": team_name,
-        "t2": "2DIE4 | SNOWYY | SWEATY | C: NOXES",
-        "t3": "RLCS 24 MAJOR 1 | TEAM PROFILE",
+        "t2": "ARCHIE | JOYO | OSKI | C: SNASKI",
+        "t3": "RLCS 24 MAJOR 2 | TEAM PROFILE",
         "key": key,
         "region": utils.get_region_label(region),
-        "seed": 1,
-        "points": 48,
-        "placements": "1st | 1st | 1st",
-        "c1": constants.TEAM_INFO[key]["c1"],
-        "c2": constants.TEAM_INFO[key]["c2"],
+        "seed": 4,
+        "points": 36,
+        "placements": "3-4th | 2nd | 5-8th",
+        "c1": constants.TEAM_INFO[team_name]["c1"],
+        "c2": constants.TEAM_INFO[team_name]["c2"],
         "img_path": os.path.join("viz", "images", base_path, "Profiles", utils.get_region_label(region))
     }
     create_image(config, team_name, data_path)
