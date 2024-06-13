@@ -11,20 +11,15 @@ MID_X, MID_Y = (constants.MAP_Y + (MARGIN * 4)) / 2, (constants.MAP_X + (MARGIN 
 WHITE, BLACK = (255,255,255), (0,0,0)
 LIGHT_GREY, DARK_GREY = (140,140,140), (70,70,70)
 
-def get_y(val, img_height):
-    return img_height - val
-
-def calculate_stats(game_list):
+def calculate_stats(tag):
     low_shot_games = {}
+    event_data = {}
     team_info = {}
-    regions = ["Asia-Pacific", "Europe", "Middle East & North Africa", "North America", "Oceania", "South America", "Sub-Saharan Africa"]
-    #regions = ["Europe"]
 
-    for region in regions:
-        # for i in range(1, 3):
-        #     maj_num = "Major 1" if i <= 3 else "Major 2"
-        #     group_path = os.path.join("replays", "RLCS 24", maj_num, region, f"Open Qualifiers {i}")
-        for maj_name in ["Major 1"]:
+    regions = ["Asia-Pacific", "Europe", "Middle East & North Africa", "North America", "Oceania", "South America", "Sub-Saharan Africa"]
+    for maj_name in ["Major 1", "Major 2"]:
+        reg_list = regions + ["[1] Major"] if maj_name == "Major 1" else regions
+        for region in reg_list:
             group_path = os.path.join("replays", "RLCS 24", maj_name, region)
             game_list = utils.read_group_data(group_path)
             reg = utils.get_region_label(region)
@@ -40,24 +35,30 @@ def calculate_stats(game_list):
                     game_shots_faced[tn] = 0
                     if tn not in low_shot_games: 
                         low_shot_games[tn] = 0
+                        event_data[tn] = 0
                         team_info[tn] = reg
 
                 for player in game.players:
                     game_shots_faced[teams[not player.is_orange]] += player.shots
                 
-                if game_shots_faced[teams[True]] < 5 and game.game_metadata.last_second <= 0:
+                if game_shots_faced[teams[True]] < 5 and game.game_metadata.last_second <= 1:
                     low_shot_games[teams[True]] += 1
-                if game_shots_faced[teams[False]] < 5 and game.game_metadata.last_second <= 0:
+                    if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                        event_data[teams[True]] += 1
+                if game_shots_faced[teams[False]] < 5 and game.game_metadata.last_second <= 1:
                     low_shot_games[teams[False]] += 1
+                    if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                        event_data[teams[False]] += 1
 
-        print(region)
+            print(region)
         
     print(len(low_shot_games))
     stat_data = dict(sorted(low_shot_games.items(), key=lambda item: (-item[1], str.casefold(item[0]))))
-    return stat_data, team_info
+    old_ranks = dict(sorted(low_shot_games.items(), key=lambda item: (-item[1] + event_data[item[0]], str.casefold(item[0]))))
+    return stat_data, team_info, event_data, old_ranks
 
-def create_image(game_list, config):
-    team_data, team_info = calculate_stats(game_list)
+def create_image(tag, config):
+    team_data, team_info, event_data, old_ranks = calculate_stats(tag)
     NUM_SPOTS = 15
     ROW_Y = 125
 
@@ -97,7 +98,22 @@ def create_image(game_list, config):
         ], 50, fill=rect_color, outline=rect_line, width=5)
         draw.text((base_x, base_y + (i * ROW_Y)), name, fill=BLACK, font=constants.BOUR_50)
         draw.text((base_x + col_locs[0], base_y + (i * ROW_Y)), region, fill=BLACK, font=constants.BOUR_50, anchor="ma")
-        draw.text((base_x + col_locs[1], base_y + (i * ROW_Y)), "{}".format(team_data[name]), fill=BLACK, font=constants.BOUR_50, anchor="ma")
+        inc_str = "(+{})".format(event_data[name]) if name in event_data else ""
+        draw.text((base_x + col_locs[1], base_y + (i * ROW_Y)), "{} {}".format(team_data[name], inc_str), 
+            fill=BLACK, font=constants.BOUR_50, anchor="ma")
+        change = i - list(old_ranks).index(name) 
+        if change < 0:
+            change_str = f"{abs(change)}"
+            change_color = (50,250,50)
+            draw.text((base_x - 120, base_y + (i * ROW_Y) + 8), "↑", fill=change_color, font=constants.ARIAL)
+        elif change > 0:
+            change_str = f"{abs(change)}"
+            change_color = (250,50,50)
+            draw.text((base_x - 120, base_y + (i * ROW_Y) + 8), "↓", fill=change_color, font=constants.ARIAL)
+        else:
+            change_str = "-"
+            change_color = DARK_GREY
+        draw.text((base_x - 100, base_y + (i * ROW_Y) + 5), change_str, fill=change_color, font=constants.BOUR_40)
     print([key for key in team_data if team_data[key] == team_data[name]])
 
     # Dotted circle logo
@@ -107,22 +123,20 @@ def create_image(game_list, config):
 
 def main():
     key = "RL ESPORTS"
-    reg_num = 3
+    tag = "Open Qualifier 4"
+    folder = "Post OQ4"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": "LOW SHOT GAMES",
-        "t2": "RLCS 24 | SEASON | SWISS + PLAYOFFS",
+        "t2": f"RLCS 24 | {folder.upper()}",
         "t3": "TOP 15 TEAMS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("RLCS 24", "Leaderboards", "Season", f"Post OQ{reg_num}", "low_shot_games.png")
+        "img_name": os.path.join("RLCS 24", "Leaderboards", "Season", folder, "low_shot_games.png")
     }
 
-    base_path = os.path.join("replays", "RLCS 24", "Major 1", "{}")
-    
-    create_image(base_path, config)
-    
-    return 1
+    create_image(tag, config)
+    return 0
   
 if __name__ == "__main__":
     main()

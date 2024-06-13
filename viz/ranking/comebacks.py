@@ -15,7 +15,7 @@ def get_y(val, img_height):
     return img_height - val
 
 def calculate_stats(tag):
-    kickoff_goals = {}
+    comebacks = {}
     event_data = {}
     team_info = {}
 
@@ -28,31 +28,59 @@ def calculate_stats(tag):
             reg = utils.get_region_label(region)
 
             for game in game_list:
-                for team in game.teams:
-                    team_ids = [player_id.id for player_id in team.player_ids]
+                t0, t1 = "", ""
+                for i in range(len(game.teams)):
+                    curr_team = game.teams[i]
+                    team_ids = [player_id.id for player_id in curr_team.player_ids]
                     team_players = [player.name for player in game.players if player.id.id in team_ids]
-                    tn = utils.get_team_label(team.name, reg, team_players)
-                    if tn not in kickoff_goals: 
-                        kickoff_goals[tn] = 0
-                        event_data[tn] = 0
+                    tn = utils.get_team_label(curr_team.name, reg, team_players)
+                    if i == 0:
+                        t0 = tn
+                    else:
+                        t1 = tn
+                    if tn not in comebacks: 
+                        comebacks[tn] = [0, 0]
+                        event_data[tn] = [0, 0]
                         team_info[tn] = reg
 
-                for goal in game.game_metadata.goals:
-                    team_name = [pl.team_name for pl in game.players if goal.scorer == pl.name][0]
-                    goal_team = [team for team in game.teams if team.name == team_name][0]
-                    team_ids = [player_id.id for player_id in goal_team.player_ids]
-                    team_players = [player.name for player in game.players if player.id.id in team_ids]
-                    tn = utils.get_team_label(goal_team.name, reg, team_players)
-                    if goal.time_after_kickoff < 6 and goal.time_after_kickoff > 0.1:
-                        kickoff_goals[tn] += 1
-                        if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
-                            event_data[tn] += 1
-
+                if len(game.game_metadata.goals) > 0 and game.game_metadata.last_second <= 1:
+                    first_goal = game.game_metadata.goals[0]
+                    if first_goal.is_orange == game.teams[0].is_orange:
+                        if game.teams[0].score > game.teams[1].score:
+                            # num = 1
+                            # try:
+                            #     while game.game_metadata.goals[num].is_orange != game.teams[0].is_orange:
+                            #         num += 1
+                            comebacks[t0][0] += 1
+                            if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                                event_data[t0][0] += 1
+                            # except IndexError:
+                            #     print("  error", game.game_metadata.tag)
+                        else:
+                            comebacks[t0][1] += 1
+                            if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                                comebacks[t0][1] += 1
+                    if first_goal.is_orange == game.teams[1].is_orange:
+                        if game.teams[1].score > game.teams[0].score:
+                            # num = 1
+                            # try:
+                            #     while game.game_metadata.goals[num].is_orange != game.teams[1].is_orange:
+                            #         num += 1
+                            comebacks[t1][0] += 1
+                            if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                                event_data[t1][0] += 1
+                            # except IndexError:
+                            #     print("  error", game.game_metadata.tag)
+                        else:
+                            comebacks[t1][1] += 1
+                            if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                                comebacks[t1][1] += 1
             print(region)
         
-    print(len(kickoff_goals))
-    stat_data = dict(sorted(kickoff_goals.items(), key=lambda item: (-item[1], str.casefold(item[0]))))
-    old_ranks = dict(sorted(kickoff_goals.items(), key=lambda item: (-item[1] + event_data[item[0]], str.casefold(item[0]))))
+    print(len(comebacks))
+    comebacks = {k: v for k, v in comebacks.items() if sum(v) >= 10}
+    stat_data = dict(sorted(comebacks.items(), key=lambda item: (item[1][1], str.casefold(item[0]))))
+    old_ranks = dict(sorted(comebacks.items(), key=lambda item: (item[1][1] - event_data[item[0]][1], str.casefold(item[0]))))
     return stat_data, team_info, event_data, old_ranks
 
 def create_image(tag, config):
@@ -96,8 +124,8 @@ def create_image(tag, config):
         ], 50, fill=rect_color, outline=rect_line, width=5)
         draw.text((base_x, base_y + (i * ROW_Y)), name, fill=BLACK, font=constants.BOUR_50)
         draw.text((base_x + col_locs[0], base_y + (i * ROW_Y)), region, fill=BLACK, font=constants.BOUR_50, anchor="ma")
-        inc_str = "(+{})".format(event_data[name]) if name in event_data else ""
-        draw.text((base_x + col_locs[1], base_y + (i * ROW_Y)), "{} {}".format(team_data[name], inc_str), 
+        inc_str = "({},{})".format(team_data[name][0], team_data[name][1]) if name in event_data else ""
+        draw.text((base_x + col_locs[1], base_y + (i * ROW_Y)), "{}% {}".format(round(100 * team_data[name][0] / sum(team_data[name]), 1), inc_str), 
             fill=BLACK, font=constants.BOUR_50, anchor="ma")
         change = i - list(old_ranks).index(name) 
         if change < 0:
@@ -112,6 +140,7 @@ def create_image(tag, config):
             change_str = "-"
             change_color = DARK_GREY
         draw.text((base_x - 100, base_y + (i * ROW_Y) + 5), change_str, fill=change_color, font=constants.BOUR_40)
+        
     print([key for key in team_data if team_data[key] == team_data[name]])
 
     # Dotted circle logo
@@ -125,15 +154,16 @@ def main():
     folder = "Post OQ4"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": "KICKOFF GOALS",
+        "t1": "COMEBACK VICTORIES",
         "t2": f"RLCS 24 | {folder.upper()}",
         "t3": "TOP 15 TEAMS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("RLCS 24", "Leaderboards", "Season", folder, "kickoff_goals.png")
+        "img_name": os.path.join("RLCS 24", "Leaderboards", "Season", folder, "comebacks.png")
     }
-
+    
     create_image(tag, config)
+    
     return 0
   
 if __name__ == "__main__":

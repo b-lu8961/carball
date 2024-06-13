@@ -14,14 +14,15 @@ LIGHT_GREY, DARK_GREY = (140,140,140), (70,70,70)
 def get_y(val, img_height):
     return img_height - val
 
-def calculate_stats(reg_num: int):
+def calculate_stats(tag):
     clutch_goals = {}
+    event_data = {}
     player_info = {}
+      
     regions = ["Asia-Pacific", "Europe", "Middle East & North Africa", "North America", "Oceania", "South America", "Sub-Saharan Africa"]
-    #regions = ["Oceania"]
-
-    for region in regions:
-        for maj_name in ["Major 1"]:
+    for maj_name in ["Major 1", "Major 2"]:
+        reg_list = regions + ["[1] Major"] if maj_name == "Major 1" else regions
+        for region in reg_list:
             group_path = os.path.join("replays", "RLCS 24", maj_name, region)
             game_list = utils.read_group_data(group_path)
             rn = utils.get_region_label(region)
@@ -31,6 +32,7 @@ def calculate_stats(reg_num: int):
                     pn = utils.get_player_label(player.name, rn)
                     if pn not in clutch_goals:
                         clutch_goals[pn] = 0
+                        event_data[pn] = 0
                 
                 for goal in game.game_metadata.goals:
                     team_name = [pl.team_name for pl in game.players if goal.scorer == pl.name][0]
@@ -44,15 +46,18 @@ def calculate_stats(reg_num: int):
 
                     if goal.seconds_remaining <= 30 and abs(goal.blue_score - goal.orange_score) <= 1:
                         clutch_goals[pn] += 1
+                        if tag in game.game_metadata.tag or ("Major 2" in game.game_metadata.tag and "Open Qualifiers 1" in game.game_metadata.tag):
+                            event_data[pn] += 1
 
-        print(region)
+            print(region)
         
     print(len(clutch_goals))
     stat_data = dict(sorted(clutch_goals.items(), key=lambda item: (-item[1], str.casefold(item[0]))))
-    return stat_data, player_info
+    old_ranks = dict(sorted(clutch_goals.items(), key=lambda item: (-item[1] + event_data[item[0]], str.casefold(item[0]))))
+    return stat_data, player_info, event_data, old_ranks
 
-def create_image(reg_num, config):
-    player_data, player_info = calculate_stats(reg_num)
+def create_image(tag, config):
+    player_data, player_info, event_data, old_ranks = calculate_stats(tag)
     NUM_SPOTS = 15
     ROW_Y = 125
 
@@ -95,7 +100,22 @@ def create_image(reg_num, config):
         draw.text((base_x, base_y + (i * ROW_Y)), name, fill=BLACK, font=constants.BOUR_50)
         draw.text((base_x + col_locs[0], base_y + (i * ROW_Y)), team_name, fill=BLACK, font=constants.BOUR_50, anchor="ma")
         draw.text((base_x + col_locs[1], base_y + (i * ROW_Y)), region, fill=BLACK, font=constants.BOUR_50, anchor="ma")
-        draw.text((base_x + col_locs[2], base_y + (i * ROW_Y)), "{}".format(player_data[name]), fill=BLACK, font=constants.BOUR_50, anchor="ma")
+        inc_str = "(+{})".format(event_data[name]) if name in event_data else ""
+        draw.text((base_x + col_locs[2], base_y + (i * ROW_Y)), "{} {}".format(player_data[name], inc_str), 
+            fill=BLACK, font=constants.BOUR_50, anchor="ma")
+        change = i - list(old_ranks).index(name) 
+        if change < 0:
+            change_str = f"{abs(change)}"
+            change_color = (50,250,50)
+            draw.text((base_x - 120, base_y + (i * ROW_Y) + 8), "↑", fill=change_color, font=constants.ARIAL)
+        elif change > 0:
+            change_str = f"{abs(change)}"
+            change_color = (250,50,50)
+            draw.text((base_x - 120, base_y + (i * ROW_Y) + 8), "↓", fill=change_color, font=constants.ARIAL)
+        else:
+            change_str = "-"
+            change_color = DARK_GREY
+        draw.text((base_x - 100, base_y + (i * ROW_Y) + 5), change_str, fill=change_color, font=constants.BOUR_40)
     print([key for key in player_data if player_data[key] == player_data[name]])
 
     # Dotted circle logo
@@ -105,20 +125,21 @@ def create_image(reg_num, config):
 
 def main():
     key = "RL ESPORTS"
-    reg_num = 3
+    tag = "Open Qualifier 4"
+    folder = "Post OQ4"
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
         "t1": "CLUTCH GOALS",
-        "t2": "RLCS 24 | SEASON | SWISS + PLAYOFFS",
+        "t2": f"RLCS 24 | {folder.upper()}",
         "t3": "TOP 15 PLAYERS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
-        "img_name": os.path.join("RLCS 24", "Leaderboards", "Season", f"Post OQ{reg_num}", "clutch_goals.png")
+        "img_name": os.path.join("RLCS 24", "Leaderboards", "Season", folder, "clutch_goals.png")
     }
     
-    create_image(reg_num, config)
+    create_image(tag, config)
     
-    return 1
+    return 0
   
 if __name__ == "__main__":
     main()
