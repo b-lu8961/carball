@@ -64,6 +64,8 @@ message Hit {
 
     optional sint32 seconds_remaining = 30;
 
+    optional float boost_amt = 31;
+
     // pseudo stats
     // is_turnover = !(goal || dribble || pass)
 

@@ -36,14 +36,21 @@ class BoostHandler(BaseActorHandler):
             actor.get(COMPONENT_REPLICATED_ACTIVE_KEY, False))
         # boost_is_active when random_int is odd?!
         boost_is_active = (boost_is_active_random_int % 2 == 1)
+        boost_vals = actor.get('TAGame.CarComponent_Boost_TA:ReplicatedBoost', {})
         if boost_is_active:
             # manually decrease car boost amount (not shown in replay)
             # i assume game calculates the decrease itself similarly
-            boost_amount = max(0, actor.get('TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount',
-                                            0) - delta * BOOST_PER_SECOND)
-            actor['TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount'] = boost_amount
+            if boost_vals == {}:
+                boost_amount = max(0, actor.get('TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount', 0) - delta * BOOST_PER_SECOND)
+                actor['TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount'] = boost_amount
+            else:
+                boost_amount = max(0, boost_vals.get("boost_amount", 0) - delta * BOOST_PER_SECOND)
+                actor['TAGame.CarComponent_Boost_TA:ReplicatedBoost']['boost_amount'] = boost_amount
         else:
-            boost_amount = actor.get('TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount', None)
+            if boost_vals == {}:
+                boost_amount = actor.get('TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount', None)
+            else:
+                boost_amount = boost_vals.get("boost_amount", None)
 
         self.parser.player_data[player_actor_id][frame_number]['boost'] = boost_amount
         self.parser.player_data[player_actor_id][frame_number]['boost_active'] = boost_is_active

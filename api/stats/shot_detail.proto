@@ -36,4 +36,5 @@ message ShotDetail {
     optional bool is_on_target = 20;
     optional BallData cross_pos = 21; // Position ball croses goal line
     optional float adj_vel = 22;
+    optional string shooter_name = 23;
 }

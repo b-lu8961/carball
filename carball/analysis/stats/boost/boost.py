@@ -34,6 +34,9 @@ class BoostStat(BaseStat):
             proto_boost.time_full_boost = self.get_time_with_max_boost(data_frame, player_data_frame)
             proto_boost.time_low_boost = self.get_time_with_low_boost(data_frame, player_data_frame)
             proto_boost.time_no_boost = self.get_time_with_zero_boost(data_frame, player_data_frame)
+            proto_boost.time_boost_low = proto_boost.time_low_boost
+            proto_boost.time_boost_mid = self.get_time_with_boost_mid(data_frame, player_data_frame)
+            proto_boost.time_boost_high = self.get_time_with_boost_high(data_frame, player_data_frame)
             proto_boost.average_boost_level = self.get_average_boost_level(player_data_frame)
 
             if 'boost_collect' not in player_data_frame:
@@ -124,6 +127,18 @@ class BoostStat(BaseStat):
     @staticmethod
     def get_time_with_zero_boost(data_frame: pd.DataFrame, player_dataframe: pd.DataFrame) -> np.float64:  # at 0 boost
         return sum_deltas_by_truthy_data(data_frame, player_dataframe.boost == 0)
+    
+    #@staticmethod
+    #def get_time_with_boost_low(data_frame: pd.DataFrame, player_dataframe: pd.DataFrame) -> np.float64:  # less than 25
+    #    return sum_deltas_by_truthy_data(data_frame, player_dataframe.boost <= 63.75) # 255 * (25/100)
+    
+    @staticmethod
+    def get_time_with_boost_mid(data_frame: pd.DataFrame, player_dataframe: pd.DataFrame) -> np.float64:  # 25 to 75
+        return sum_deltas_by_truthy_data(data_frame, (63.75 < player_dataframe.boost) & (player_dataframe.boost <= 191.25)) # 255 * (75/100)
+    
+    @staticmethod
+    def get_time_with_boost_high(data_frame: pd.DataFrame, player_dataframe: pd.DataFrame) -> np.float64:  # more than 75
+        return sum_deltas_by_truthy_data(data_frame, player_dataframe.boost > 191.25) 
 
     @staticmethod
     def get_player_boost_collection(player_dataframe: pd.DataFrame) -> Dict[str, int]:

@@ -27,6 +27,8 @@ class RelativeTendencies(TeamTendencies):
                         for player_id in team.player_ids}
 
             player_y_data_frame = pd.concat(player_y, axis=1)
+            replace_val = -4608 if not team.is_orange else 4608
+            player_y_data_frame = player_y_data_frame.fillna(replace_val)
             last_person = player_y_data_frame.idxmin(axis=1).rename('last_person')
             first_person = player_y_data_frame.idxmax(axis=1).rename('first_person')
 
@@ -52,4 +54,5 @@ class RelativeTendencies(TeamTendencies):
                     total_time = relative_position.time_most_back_player + relative_position.time_most_forward_player
                     relative_position.time_between_players = player_map[player_id.id].time_in_game - total_time
                 except (AttributeError, KeyError) as e:
+                    print("rel pos error")
                     pass

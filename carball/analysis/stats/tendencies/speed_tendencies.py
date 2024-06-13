@@ -45,6 +45,6 @@ class SpeedTendencies(BaseStat):
         player.stats.averages.average_speed = average_speed
 
         player.stats.speed.time_at_super_sonic = sum_deltas_by_truthy_data(data_frame, speed >= 22000)
-        player.stats.speed.time_at_slow_speed = sum_deltas_by_truthy_data(data_frame, speed <= 7000)
-        player.stats.speed.time_at_boost_speed = sum_deltas_by_truthy_data(data_frame, speed > 14100)
+        player.stats.speed.time_at_slow_speed = sum_deltas_by_truthy_data(data_frame, speed <= 14100)
+        player.stats.speed.time_at_boost_speed = sum_deltas_by_truthy_data(data_frame, (14100 < speed) & (speed < 22000))
 

@@ -17,6 +17,11 @@ class ShotDetailStats(BaseStat):
     def calculate_stat(self, proto_stat, game: Game, proto_game: game_pb2.Game, player_map: Dict[str, Player], data_frame: pd.DataFrame):
         shots = [hit for hit in proto_game.game_stats.hits if hit.match_shot or hit.match_goal]
         for shot in shots:
+            idx_list = [idx for idx in data_frame.index if idx <= shot.frame_number]
+            if len(idx_list) == 0:
+                print("shot data frame error")
+                continue
+            
             offset = 0
             while (shot.frame_number - offset) not in data_frame.index:
                 offset += 1
@@ -33,7 +38,8 @@ class ShotDetailStats(BaseStat):
                 frame_number = shot.frame_number,
                 is_orange = shot_is_orange,
                 seconds_remaining = shot.seconds_remaining,
-                previous_hit_frame_number = shot.previous_hit_frame_number
+                previous_hit_frame_number = shot.previous_hit_frame_number,
+                shooter_name = player_map[shot.player_id.id].name
             )
             ball_frame = data_frame["ball"].loc[shot.frame_number - offset]
             shot_data.ball_pos.pos_x = ball_frame["pos_x"]
@@ -250,17 +256,17 @@ class ShotDetailStats(BaseStat):
         shot_data.shooter.vel.pos_y = -1 if np.isnan(frame["vel_y"]) else frame["vel_y"]
         shot_data.shooter.vel.pos_z = -1 if np.isnan(frame["vel_z"]) else frame["vel_z"]
         shot_data.shooter.boost = 0 if np.isnan(frame["boost"]) else int(frame["boost"])
-        shot_data.shooter.jump_active = 0 if np.isnan(frame["jump_active"]) or type(frame["jump_active"]) == bool else frame["jump_active"]
-        shot_data.shooter.dodge_active = 0 if np.isnan(frame["dodge_active"]) or type(frame["dodge_active"]) == bool else frame["dodge_active"]
-        shot_data.shooter.double_jump_active = 0 if np.isnan(frame["double_jump_active"]) or type(frame["double_jump_active"]) == bool else frame["double_jump_active"]
+        shot_data.shooter.jump_active = 0 if np.isnan(frame["jump_active"]) or type(frame["jump_active"]) == bool else int(frame["jump_active"])
+        shot_data.shooter.dodge_active = 0 if np.isnan(frame["dodge_active"]) or type(frame["dodge_active"]) == bool else int(frame["dodge_active"])
+        shot_data.shooter.double_jump_active = 0 if np.isnan(frame["double_jump_active"]) or type(frame["double_jump_active"]) == bool else int(frame["double_jump_active"])
 
     @staticmethod
     def add_teammate(shot_data, frame):
         mate = shot_data.teammates.add(
             boost = 0 if np.isnan(frame["boost"]) else int(frame["boost"]),
-            jump_active = 0 if np.isnan(frame["jump_active"]) or type(frame["jump_active"]) == bool else frame["jump_active"],
-            dodge_active = 0 if np.isnan(frame["dodge_active"]) or type(frame["dodge_active"]) == bool else frame["dodge_active"],
-            double_jump_active = 0 if np.isnan(frame["double_jump_active"]) or type(frame["double_jump_active"]) == bool else frame["double_jump_active"],
+            jump_active = 0 if np.isnan(frame["jump_active"]) or type(frame["jump_active"]) == bool else int(frame["jump_active"]),
+            dodge_active = 0 if np.isnan(frame["dodge_active"]) or type(frame["dodge_active"]) == bool else int(frame["dodge_active"]),
+            double_jump_active = 0 if np.isnan(frame["double_jump_active"]) or type(frame["double_jump_active"]) == bool else int(frame["double_jump_active"]),
         )
         mate.pos.pos_x = -1 if np.isnan(frame["pos_x"]) else frame["pos_x"]
         mate.pos.pos_y = -1 if np.isnan(frame["pos_y"]) else frame["pos_y"]
@@ -273,9 +279,9 @@ class ShotDetailStats(BaseStat):
     def add_defender(shot_data, frame):
         opp = shot_data.defenders.add(
             boost = 0 if np.isnan(frame["boost"]) else int(frame["boost"]),
-            jump_active = 0 if np.isnan(frame["jump_active"]) or type(frame["jump_active"]) == bool else frame["jump_active"],
-            dodge_active = 0 if np.isnan(frame["dodge_active"]) or type(frame["dodge_active"]) == bool else frame["dodge_active"],
-            double_jump_active = 0 if np.isnan(frame["double_jump_active"]) or type(frame["double_jump_active"]) == bool else frame["double_jump_active"],
+            jump_active = 0 if np.isnan(frame["jump_active"]) or type(frame["jump_active"]) == bool else int(frame["jump_active"]),
+            dodge_active = 0 if np.isnan(frame["dodge_active"]) or type(frame["dodge_active"]) == bool else int(frame["dodge_active"]),
+            double_jump_active = 0 if np.isnan(frame["double_jump_active"]) or type(frame["double_jump_active"]) == bool else int(frame["double_jump_active"]),
         )
         opp.pos.pos_x = -1 if np.isnan(frame["pos_x"]) else frame["pos_x"]
         opp.pos.pos_y = -1 if np.isnan(frame["pos_y"]) else frame["pos_y"]

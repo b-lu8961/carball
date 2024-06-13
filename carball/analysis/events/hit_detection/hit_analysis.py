@@ -218,7 +218,7 @@ class SaltieHit:
             total_next_hit_time += next_hit_time - start_time
 
             # aerials
-            if saltie_hit.ball_data.pos_z >= 400.0:
+            if saltie_hit.ball_data.pos_z >= GOAL_Z:
                 saltie_hit.aerial = True
 
             # assist calculation
@@ -251,6 +251,12 @@ class SaltieHit:
                         saltie_hit.save = True
             except NameError:
                 pass
+
+            # Boost amount
+            hit_player = player_map[saltie_hit.player_id.id]
+            raw_boost = data_frame[hit_player.name]['boost'].at[hit_frame_number]
+            boost_val = 0 if np.isnan(raw_boost) else round(100 * (raw_boost / 255), 3)
+            saltie_hit.boost_amt = boost_val
 
         logger.debug('next time: %s', total_next_hit_time * 1000)
         logger.debug('stat time: %s', total_stat_time * 1000)

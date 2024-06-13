@@ -86,11 +86,13 @@ class EventsCreator:
             if i == 0 and insert_frame < hit.frame_number:
                 if insert_frame in collision_distances[curr_player.is_orange][curr_player.name].index:
                     col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame]
+                elif insert_frame - 1 in collision_distances[curr_player.is_orange][curr_player.name].index:
+                    col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame - 1]
+                elif insert_frame + 1 in collision_distances[curr_player.is_orange][curr_player.name].index:
+                    col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame + 1]
                 else:
-                    try:
-                        col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame - 1]
-                    except KeyError:
-                        col_dist = collision_distances[curr_player.is_orange][curr_player.name].loc[insert_frame + 1]
+                    col_dist = 200
+                    print("  insert hit with missing col dist")
                 new_hit = proto_game.game_stats.hits.add(
                     frame_number = insert_frame,
                     player_id = curr_player.id,
@@ -219,6 +221,7 @@ class EventsCreator:
                         hit_color = data_frame['ball']['hit_team_no'].at[fifty_hit.frame_number]
                         if hit_color == player.is_orange:
                             # Fifty hit misattributed
+                            #print("Reassign")
                             fifty_hit.player_id.id = player.id.id
                         else:
                             # Insert fifty hit before current one
@@ -253,9 +256,11 @@ class EventsCreator:
                 last_team_hit = None if len(last_team_hit_list) == 0 else last_team_hit_list[-1]
                 
                 if curr_player_hit is None and last_team_hit is None:
-                    recent_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number <= idx][-1]
-                    new_hit_frame = recent_hit.frame_number - 1 if idx == recent_hit.frame_number else recent_hit.frame_number + 1
-                    #print("insert 0", new_hit_frame)
+                    try:
+                        recent_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number <= idx][-1]
+                        new_hit_frame = recent_hit.frame_number - 1 if idx == recent_hit.frame_number else recent_hit.frame_number + 1
+                    except IndexError:
+                        new_hit_frame = 1
                     self.insert_hit(proto_game, data_frame, hits, new_hit_frame, curr_player, collision_distances)
                     continue
 
@@ -312,11 +317,14 @@ class EventsCreator:
                     if len(hit_list) != 0:
                         stat_hit = hit_list[-1]
                     else:
-                        min_frame = collision_distances[curr_player.is_orange][curr_player.name].loc[start_frame:stat_idx].idxmin()
-                        while len([hit for hit in proto_game.game_stats.hits if hit.frame_number == min_frame]) != 0:
-                            min_frame -= 1
-                        #print("insert 2", min_frame)
-                        stat_hit = self.insert_hit(proto_game, data_frame, hits, min_frame, curr_player, collision_distances)
+                        try:
+                            min_frame = collision_distances[curr_player.is_orange][curr_player.name].loc[start_frame:stat_idx].idxmin()
+                            while len([hit for hit in proto_game.game_stats.hits if hit.frame_number == min_frame]) != 0:
+                                min_frame -= 1
+                            #print("insert 2", min_frame)
+                            stat_hit = self.insert_hit(proto_game, data_frame, hits, min_frame, curr_player, collision_distances)
+                        except ValueError:
+                            continue
                         
                     if stat_type == 'match_goals':
                         if stat_hit.match_goal:

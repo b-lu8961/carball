@@ -83,10 +83,9 @@ class StatsManager:
         hits = proto_game.game_stats.hits
         for hit_index in range(len(hits) - 1):
             current_hit = hits[hit_index]
-            if current_hit.HasField("next_hit_frame_number"):
-                next_hit = hits[hit_index + 1]
-                for hit_stat in hit_stats:
-                    hit_stat.calculate_next_hit_stat(game, proto_game, current_hit, next_hit, player_map, hit_index)
+            next_hit = hits[hit_index + 1] if current_hit.HasField("next_hit_frame_number") else None
+            for hit_stat in hit_stats:
+                hit_stat.calculate_next_hit_stat(game, proto_game, current_hit, next_hit, player_map, hit_index)
 
     @staticmethod
     def calculate_metadata_stats(game: Game, proto_game: game_pb2.Game, player_map: Dict[str, Player],

@@ -55,6 +55,9 @@ class GoalStats(BaseStat):
             offset = 1
             while (frame_num - offset) not in data_frame.index or np.isnan(data_frame.loc[frame_num - offset, ('ball', 'vel_x')]):
                 offset += 1
+                if offset > 20:
+                    offset = -1
+                    break
             vel_data = tuple(data_frame.loc[frame_num - offset, ('ball', ['vel_x', 'vel_y', 'vel_z'])] / 10)
             goal.ball_vel.pos_x = vel_data[0]
             goal.ball_vel.pos_y = vel_data[1]
@@ -63,12 +66,15 @@ class GoalStats(BaseStat):
             start_sign = np.sign(goal.ball_pos.pos_y)
             curr_frame = goal.frame_number
             off_half_time = 0
-            while np.sign(data_frame['ball']['pos_y'].at[curr_frame]) == start_sign:
-                off_half_time += data_frame['game', 'delta'].at[curr_frame]
-                curr_frame -= 1
-                if np.abs(data_frame['ball']['vel_x'].at[curr_frame]) < 0.01:
-                    break
-            goal.time_in_off_half = round(off_half_time, 3)
+            try:
+                while np.sign(data_frame['ball']['pos_y'].at[curr_frame]) == start_sign:
+                    off_half_time += data_frame['game', 'delta'].at[curr_frame]
+                    curr_frame -= 1
+                    if np.abs(data_frame['ball']['vel_x'].at[curr_frame]) < 0.01:
+                        break
+                goal.time_in_off_half = round(off_half_time, 3)
+            except:
+                pass
 
             num_touches = 0
             team_touches = [hit for hit in proto_game.game_stats.hits if player_map[hit.player_id.id].is_orange == goal.is_orange\

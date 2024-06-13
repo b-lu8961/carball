@@ -29,6 +29,12 @@ message Boost {
     optional float wasted_big = 11;
     // Wasted boost from small boosts
     optional float wasted_small = 12;
+    // Time when player has <= 33 boost
+    optional float time_boost_low = 13;
+    // Time when player has 34 < boost <= 66
+    optional float time_boost_mid = 14;
+    // Time when player has 67 < boost 
+    optional float time_boost_high = 15;
 }
 
 message Distance {

@@ -18,6 +18,9 @@ class TurnoverStat(HitStat):
 
     def calculate_next_hit_stat(self, game: Game, proto_game: game_pb2.Game, saltie_hit: Hit, next_saltie_hit: Hit,
                                 player_map: Dict[str, Player], hit_index: int):
+        if next_saltie_hit is None:
+            return
+        
         hits = proto_game.game_stats.hits
         hit_player = player_map[saltie_hit.player_id.id]
         second_hit_player = player_map[next_saltie_hit.player_id.id]
