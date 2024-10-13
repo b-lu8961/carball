@@ -23,6 +23,9 @@ def calculate_exp_goals(game_list, team_names):
     for idx in range(len(game_list)):
         game = game_list[idx]
 
+        if idx == 0:
+            print([team.name for team in game.teams])
+
         blue_team = [team for team in game.teams if not team.is_orange][0]
         orange_team = [team for team in game.teams if team.is_orange][0]
         labels.append(f"Game {idx + 1} | {team_names[0]} {blue_team.score} - {orange_team.score} {team_names[1]}")
@@ -72,7 +75,7 @@ def draw_goal_races(game_list, team_names, team_keys):
     timeline_height = 110
     race_height = max_xG * one_height
     chart_height = race_height + timeline_height + 60
-    width, height = int((max_game_len * sec_width) + (MARGIN * 5.5)), int((num_games * chart_height) + (MARGIN * (num_games + 1))) + 70
+    width, height = int((max_game_len * sec_width) + (MARGIN * 5.5)), int((num_games * chart_height) + (MARGIN * (num_games + 1))) + 120
     if max_game_len > 300:
         width += 20
     img = Image.new(mode="RGBA", size = (width, height), color=WHITE)
@@ -158,7 +161,7 @@ def draw_goal_races(game_list, team_names, team_keys):
                 curr_xG += shot[1]
                 
                 if shot[2]:
-                    ellipse_color = constants.TEAM_INFO[team_keys[0]]["c1"] if line_color == BLUE else constants.TEAM_INFO[team_keys[1]]["c1"]
+                    ellipse_color = constants.TEAM_INFO[team_keys[0]]["c1"] if line_color == BLUE else constants.TEAM_INFO[team_keys[1]]["c3"]
                     ellipse_locs.append([
                         (pos_x - 8 + base_x, curr_y - 8),
                         (pos_x + 8 + base_x, curr_y + 8),
@@ -196,21 +199,21 @@ def create_image(team_names, game_list, team_keys, config):
     img.paste(goal_race_img, (MARGIN, get_y(goal_race_img.height + (3 * MARGIN), IMAGE_Y)))
 
     # Dotted circle logo
-    utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
+    utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, (16, 75, 228), (172, 136, 53))
     
     os.makedirs(config["img_path"], exist_ok=True)
     img.save(os.path.join(config["img_path"], "xG_timelines.png"))
 
 def main():
-    team_names = ("TEAM3", "M8 ALPINE")
-    team_keys = ("TEAM3", "GENTLE MATES")
+    team_names = ("G2 STRIDE", "FURIA")
+    team_keys = ("G2 ESPORTS", "FURIA")
     event = "RL ESPORTS"
-    base_path = os.path.join("RLCS 24", "Major 1", "Europe", "Open Qualifiers 1", "Day 4 - Single Elimination Stage", "GMA vs T3")
+    base_path = os.path.join("RLCS 24", "World Championship", "[2] Playoffs", "[3] Lower Quarterfinals", "G2 VS FUR")
 
     config = {
         "logo": constants.TEAM_INFO[event]["logo"],
-        "t1": f"{team_keys[0]} 1 - 4 {team_keys[1]}",
-        "t2": "RLCS 24 EU | OQ 1 | QUARTERFINAL",
+        "t1": f"{team_keys[0]} 4 - 3 {team_keys[1]}",
+        "t2": "RLCS 24 | WORLDS | PLAYOFFS | LOWER QF",
         "t3": "EXPECTED GOAL TIMELINES",
         "c1": constants.TEAM_INFO[event]["c1"],
         "c2": constants.TEAM_INFO[event]["c2"],

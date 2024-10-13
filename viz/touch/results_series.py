@@ -89,20 +89,21 @@ def create_image(team_keys, game_list, config):
     utils.draw_title_text(draw, logo_width, MARGIN, config, constants.BOUR_80, constants.BOUR_40)
 
     # Dotted circle logo
-    utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
+    utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, (16, 75, 228), (172, 136, 53))
     
     os.makedirs(config["img_path"], exist_ok=True)
     img.save(os.path.join(config["img_path"], "touch_results.png"))
 
 def main():
-    team_keys = ["MOIST ESPORTS", "TEAM VITALITY"]
-    event = "RL ESPORTS"
-    base_path = os.path.join("RLCS 24", "Major 1", "Europe", "Open Qualifiers 1", "Day 4 - Single Elimination Stage", "VIT vs MST")
+    team_keys = ["FALCONS", "TEAM BDS"]
+    event = "RLCS"
+    base_path = os.path.join("RLCS 24", "World Championship", "[2] Playoffs", "[4] Semifinals", "BDS vs FLCN")
+    #base_path = os.path.join("Raidiant Star Chasers", "Event 2", "EU", "BSCO vs POYO")
 
     config = {
         "logo": constants.TEAM_INFO[event]["logo"],
-        "t1": f"{team_keys[0]} 1 - 4 {team_keys[1]}",
-        "t2": "RLCS 24 EU | OQ 1 | QUARTERFINAL",
+        "t1": f"{team_keys[0]} 3 - 4 {team_keys[1]}",
+        "t2": "RLCS 24 | WORLDS | PLAYOFFS | SF",
         "t3": "TOUCH RESULTS",
         "c1": constants.TEAM_INFO[event]["c1"],
         "c2": constants.TEAM_INFO[event]["c2"],

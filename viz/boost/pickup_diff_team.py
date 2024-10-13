@@ -117,19 +117,20 @@ def create_image(team_names, game_list, config):
 
 
     # Dotted circle logo
-    utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, config["c1"], config["c2"])
+    utils.draw_dotted_circle(draw, IMAGE_X, MARGIN, (16, 75, 228), (172, 136, 53))
     
     os.makedirs(config["img_path"], exist_ok=True)
     img.save(os.path.join(config["img_path"], "pickup_diff.png"))
 
 def main():
-    team_names = ("FALCONS", "FEARLESS")
+    team_names = ("GENTLE MATES", "TEAM VITALITY")
     key = "RL ESPORTS"
-    base_path = os.path.join("RLCS 24", "Major 1", "Middle East & North Africa", "Open Qualifiers 1", "Day 3 - Swiss Stage", "Round 3", "FEAR vs FLCN")
+    base_path = os.path.join("RLCS 24", "World Championship", "[1] Swiss Stage", "Round 2", "M8 vs VIT")
+
     config = {
         "logo": constants.TEAM_INFO[key]["logo"],
-        "t1": f"{team_names[0]} 3 - 0 {team_names[1]}",
-        "t2": "RLCS 24 MAJOR 1 | MENA OQ 1 | SWISS R3",
+        "t1": f"{team_names[0]} 3 - 2 {team_names[1]}",
+        "t2": "RLCS 24 | WORLDS | SWISS R2",
         "t3": "BOOST PICKUPS",
         "c1": constants.TEAM_INFO[key]["c1"],
         "c2": constants.TEAM_INFO[key]["c2"],
