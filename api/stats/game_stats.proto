@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 
 import "api/stats/events.proto";
 import "api/stats/ball_stats.proto";

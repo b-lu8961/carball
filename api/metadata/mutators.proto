@@ -1,13 +1,13 @@
-syntax = "proto2";
+syntax = "proto3";
 
 package api.metadata;
 
 enum BallType {
-    DEFAULT = 1;
-    BASKETBALL = 2;
-    PUCK = 3;
-    CUBEBALL = 4;
-    BREAKOUT = 5;
+    DEFAULT = 0;
+    BASKETBALL = 1;
+    PUCK = 2;
+    CUBEBALL = 3;
+    BREAKOUT = 4;
 }
 
 message Mutators {

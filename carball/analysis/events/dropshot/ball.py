@@ -2,7 +2,7 @@ import logging
 from typing import Dict
 from carball.json_parser.game import Game
 from carball.generated.api import game_pb2
-from carball.generated.api.game_pb2 import mutators_pb2 as mutators
+from carball.generated.api.metadata import mutators_pb2 as mutators
 from carball.generated.api.player_pb2 import Player
 
 log = logging.getLogger(__name__)

@@ -1,10 +1,8 @@
-syntax = "proto2";
-
-import "api/game.proto";
+syntax = "proto3";
 
 package api.stats;
 
 // Put the data frames separately so we can ignore them when we want to load data more quickly.
-extend api.Game {
+message DataFrame {
     optional bytes data_frame = 100;
 }

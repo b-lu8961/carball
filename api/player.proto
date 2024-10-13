@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 
 import "api/metadata/player_loadout.proto";
 import "api/metadata/camera_settings.proto";

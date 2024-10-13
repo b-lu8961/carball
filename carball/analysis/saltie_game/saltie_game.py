@@ -17,7 +17,7 @@ class SaltieGame:
             ball_has_been_hit = game.frames.loc[:, 'ball_has_been_hit']
             last_frame_ball_has_been_hit = ball_has_been_hit.shift(1).rename('last_frame_ball_has_been_hit')
             ball_hit_dataframe = pd.concat([ball_has_been_hit, last_frame_ball_has_been_hit], axis=1)
-            ball_hit_dataframe.fillna(False, inplace=True)
+            ball_hit_dataframe = ball_hit_dataframe.astype(bool).fillna(False)
 
             kickoff_frames = ball_hit_dataframe[(ball_hit_dataframe['ball_has_been_hit']) &
                                                 ~(ball_hit_dataframe['last_frame_ball_has_been_hit'])]

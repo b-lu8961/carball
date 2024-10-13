@@ -4,7 +4,7 @@ from tempfile import mkstemp
 
 from .create_proto import get_file_list, get_dir
 
-import_statement = 'import '
+import_statement = 'from api'
 
 
 def analyze_file(deepness, file_path, top_level_import):
@@ -17,12 +17,16 @@ def analyze_file(deepness, file_path, top_level_import):
             for i in range(len(lines)):
                 line = lines[i]
                 extra_cases = '.' in line and top_level_import in line and not (import_statement + '.') in line
-                if line.startswith(import_statement) and extra_cases:
-                    cut_line = line[len(import_statement):].rstrip()
-                    ending_string = cut_line[cut_line.rfind('.') + 1:]
-                    replace_map[cut_line] = ending_string
-                    line = 'from ' + '.' * deepness + cut_line[:cut_line.rfind(ending_string) - 1] + ' import ' + ending_string + '\n'
+                if line.startswith(import_statement):
+                    one, two = line.split(" ", 1)
+                    line = "from " + '.' * deepness + two
                     modified = True
+                # if line.startswith(import_statement) and extra_cases:
+                #     cut_line = line[len(import_statement):].rstrip()
+                #     ending_string = cut_line[cut_line.rfind('.') + 1:]
+                #     replace_map[cut_line] = ending_string
+                #     line = 'from ' + '.' * deepness + cut_line[:cut_line.rfind(ending_string) - 1] + ' import ' + ending_string + '\n'
+                #     modified = True
                 else:
                     for key in replace_map:
                         if key in line:

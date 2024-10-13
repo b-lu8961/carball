@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 
 import "api/stats/dropshot.proto";
 import "api/stats/rumble.proto";

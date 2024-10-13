@@ -1,5 +1,5 @@
 from .base import *
-from carball.generated.api.game_pb2 import mutators_pb2 as mutators
+from carball.generated.api.metadata import mutators_pb2 as mutators
 from carball.json_parser.actor_parsing import BallActor
 
 BALL_TYPES = {

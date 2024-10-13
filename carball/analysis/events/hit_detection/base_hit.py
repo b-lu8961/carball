@@ -94,14 +94,14 @@ class BaseHit:
                     (collision_distances_for_team < 300).any(axis=1)
                 ]
 
-                collision_distances_data_frame['closest_player', 'distance'].fillna(
-                    close_collision_distances_for_team.min(axis=1),
-                    inplace=True
-                )
-                collision_distances_data_frame['closest_player', 'name'].fillna(
-                    close_collision_distances_for_team.idxmin(axis=1),
-                    inplace=True
-                )
+                collision_distances_data_frame['closest_player', 'distance'] = \
+                    collision_distances_data_frame['closest_player', 'distance'].astype('float64').fillna(
+                        close_collision_distances_for_team.min(axis=1)
+                    )
+                collision_distances_data_frame['closest_player', 'name'] = \
+                    collision_distances_data_frame['closest_player', 'name'].fillna(
+                        close_collision_distances_for_team.idxmin(axis=1)
+                    )
             except KeyError as e:
                 if e.args[0] == hit_team_no:
                     logger.warning("Team %s did not hit the ball", str(hit_team_no))

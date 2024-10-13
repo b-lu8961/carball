@@ -19,7 +19,7 @@ class ShotDetailStats(BaseStat):
         for shot in shots:
             idx_list = [idx for idx in data_frame.index if idx <= shot.frame_number]
             if len(idx_list) == 0:
-                print("shot data frame error")
+                print("shot data frame error", shot.frame_number, player_map[shot.player_id.id].name)
                 continue
             
             offset = 0
