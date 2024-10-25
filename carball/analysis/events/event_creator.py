@@ -39,6 +39,7 @@ class EventsCreator:
         goal_frames = data_frame.game.goal_number.notnull()
         self.create_boostpad_events(proto_game, data_frame)
         self.create_hit_events(game, proto_game, player_map, data_frame, kickoff_frames, first_touch_frames)
+        self.create_possessions(proto_game, player_map, data_frame)
         #self.calculate_kickoff_stats(game, proto_game, player_map, data_frame, kickoff_frames, first_touch_frames)
         #self.calculate_ball_carries(game, proto_game, player_map, data_frame[goal_frames])
         #self.create_bumps(game, proto_game, player_map, data_frame[goal_frames])
@@ -424,6 +425,130 @@ class EventsCreator:
                 print("  wrong assist touch", diff, ast.frame_number, shot_frame)
 
         # self.stats = get_stats(self)
+
+    def add_possession(self, proto_game: game_pb2, pos_hit_frames, opp_frames, pos_len: float,
+                       pos_result: str, player_map: Dict[str, Player]):
+        if pos_result == "OPP_GOAL":
+            print("Opp Goal Possession", pos_hit_frames)
+        start_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number == pos_hit_frames[0]][0]
+        start_pl = player_map[start_hit.player_id.id]
+        end_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number == pos_hit_frames[-1]][0]
+        end_pl = player_map[end_hit.player_id.id]
+        proto_game.game_stats.possessions.add(
+            is_orange = start_pl.is_orange,
+            team_name = start_pl.team_name,
+            hit_frames = pos_hit_frames,
+            opp_frames = opp_frames,
+            start_player = start_pl.name,
+            end_player = end_pl.name,
+            length = pos_len,
+            result = pos_result
+        )
+        #print("-Add Possession:", start_pl.is_orange, pos_result, pos_hit_frames)
+
+    def create_possessions(self, proto_game: game_pb2.Game, player_map: Dict[str, Player], data_frame: pd.DataFrame):
+        sections = []
+        for i in range(len(proto_game.game_stats.kickoffs)):
+            ko = proto_game.game_stats.kickoffs[i]
+            if i + 1 == len(proto_game.game_stats.kickoffs):
+                sections.append((ko.start_frame_number, np.inf))
+            else:
+                next_ko = proto_game.game_stats.kickoffs[i + 1]
+                sections.append((ko.start_frame_number, next_ko.start_frame_number - 1))
+
+        for i in range(len(sections)):
+            sct = sections[i]
+            section_hits = [hit for hit in proto_game.game_stats.hits if sct[0] < hit.frame_number and hit.frame_number < sct[1]]
+            # buf = "\n" if i > 0 else ""
+            # print(f"{buf}---Kickoff {i + 1}---")
+            pos, pos_result = None, "GAME_STOP"
+            pos_hit_frames, opp_frames = [], []
+            for j in range(len(section_hits)):
+                hit = section_hits[j]
+                
+                if j + 1 < len(section_hits):
+                    next_hit = section_hits[j + 1]
+                    if player_map[hit.player_id.id].is_orange == player_map[next_hit.player_id.id].is_orange:
+                        if pos != player_map[hit.player_id.id].is_orange:
+                            if pos is not None:
+                                pos_len = data_frame['game', 'delta'][pos_hit_frames[0]:hit.frame_number - 1].sum()
+                                self.add_possession(proto_game, pos_hit_frames, opp_frames, pos_len, 
+                                    pos_result, player_map)
+                            pos_hit_frames = []
+                            opp_frames = []
+                        pos = player_map[hit.player_id.id].is_orange
+                        
+                        if hit.match_shot:
+                            detail = "shot"
+                        elif hit.player_id.id == next_hit.player_id.id:
+                            detail = "dribble"
+                        else:
+                            detail = "pass"
+                    else:
+                        if player_map[hit.player_id.id].is_orange == pos:
+                            if hit.match_goal:
+                                pos_result = "GOAL"
+                                detail = "goal"
+                            elif hit.match_shot:
+                                pos_result = "SHOT"
+                                detail = "shot"
+                            else:
+                                pos_result = "TURNOVER"
+                                detail = "weak"
+                        elif pos is not None and player_map[hit.player_id.id].is_orange != pos:
+                            detail = "save" if hit.match_save else "chal"
+                            opp_frames.append(hit.frame_number)
+                        else: 
+                            detail = "kickoff"
+                else:
+                    detail = "goal" if hit.match_goal else "ground"
+                    if hit.match_goal:
+                        if player_map[hit.player_id.id].is_orange == pos:
+                            pos_result = "GOAL"
+                        else:
+                            pos_result = "OPP_GOAL"
+                            opp_frames.append(hit.frame_number)
+                    else:
+                        opp_goal = False
+                        for k in range(len(opp_frames) - 1, -1, -1):
+                            opp_hit = [hit for hit in proto_game.game_stats.hits if hit.frame_number == opp_frames[k]][0]
+                            if opp_hit.match_goal:
+                                opp_goal = True
+                                break
+                            
+                        if opp_goal:
+                            pos_result = "OPP_GOAL"
+                        else:
+                            if player_map[hit.player_id.id].is_orange != pos:
+                                opp_frames.append(hit.frame_number)
+                            if pos_result != "GOAL":
+                                pos_result = "GAME_STOP"
+
+                hit.hit_type = detail
+                if player_map[hit.player_id.id].is_orange == pos:
+                    pos_hit_frames.append(hit.frame_number)
+
+                # ot = "" if hit.seconds_remaining >= 0 else "+"
+                # s = hit.seconds_remaining if hit.seconds_remaining >= 0 else hit.seconds_remaining * -1
+                # minute = s // 60
+                # second = s - (60 * minute)
+                # time_left = f"{ot}{minute}:{second:02d}"
+                # pos_str = "(-)" if pos is None else f"({pos})"
+                # print(time_left, player_map[hit.player_id.id].is_orange, pos_str, detail)
+            if pos_result == "GOAL":
+                pos_goal = [goal for goal in proto_game.game_metadata.goals if goal.frame_number > pos_hit_frames[-1]][0]
+                pos_len = data_frame['game', 'delta'][pos_hit_frames[0]:pos_goal.frame_number - 1].sum()
+            elif pos_result == "OPP_GOAL":
+                if opp_frames[-1] > pos_hit_frames[-1]:
+                    pos_len = data_frame['game', 'delta'][pos_hit_frames[0]:opp_frames[-1] - 1].sum()
+                else:
+                    pos_len = data_frame['game', 'delta'][pos_hit_frames[0]:pos_hit_frames[-1] - 1].sum()
+            else: # GAME_STOP
+                if i == len(sections) - 1:
+                    pos_len = data_frame['game', 'delta'][pos_hit_frames[0]:proto_game.game_metadata.frames].sum()
+                else:
+                    pos_len = data_frame['game', 'delta'][pos_hit_frames[0]:sections[i + 1][0] - 1].sum()
+            self.add_possession(proto_game, pos_hit_frames, opp_frames, pos_len, pos_result, player_map)
 
     def calculate_ball_carries(self, game: Game, proto_game: game_pb2.Game, player_map: Dict[str, Player],
                                data_frame: pd.DataFrame):

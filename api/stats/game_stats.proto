@@ -5,6 +5,7 @@ import "api/stats/ball_stats.proto";
 import "api/stats/kickoff.proto";
 import "api/stats/dropshot.proto";
 import "api/stats/boostpad.proto";
+import "api/stats/possession_chain.proto";
 package api.stats;
 
 
@@ -20,4 +21,5 @@ message GameStats {
     optional api.stats.DropshotGameStats dropshot_stats = 9;
     repeated api.stats.FiftyFifty fifty_fifties = 10;
     repeated api.stats.BoostPad boost_pads = 11;
+    repeated api.stats.PossessionChain possessions = 12;
 }

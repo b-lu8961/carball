@@ -66,6 +66,9 @@ message Hit {
 
     optional float boost_amt = 31;
 
+    // SHOT, GOAL, DRIBBLE, PASS, WEAK, TURNOVER, SAVE, CHALLENGE, GROUND
+    optional string hit_type = 32;
+
     // pseudo stats
     // is_turnover = !(goal || dribble || pass)
 

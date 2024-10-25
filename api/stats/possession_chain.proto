@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package api.stats;
+
+message PossessionChain {
+    optional bool is_orange = 1;
+    optional string team_name = 2;
+    repeated int32 hit_frames = 3;
+    repeated int32 opp_frames = 4;
+    optional string start_player = 5;
+    optional string end_player = 6;
+    optional float length = 7;
+
+    // GOAL, SHOT, TURNOVER, OPP_GOAL, GAME_STOP
+    optional string result = 8;
+}
