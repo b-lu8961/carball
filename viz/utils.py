@@ -134,6 +134,44 @@ def iter_proto(base_path):
                 pass
                 # Add function here as necessary
 
+def read_event_stats_file(path):
+    event_data = {}
+    with open(path, "r", encoding="utf-8") as data_file:
+        for line in data_file.readlines():
+            if line.startswith("Name"):
+                continue
+            pl_data = line.split(",")
+            event_data[(pl_data[0], pl_data[2])] = {
+                "region": pl_data[1],
+                "LAN": pl_data[3],
+                "gp": int(pl_data[4]),
+                "secs": float(pl_data[5]),
+                "sb": {
+                    "score": float(pl_data[6]),
+                    "goals": float(pl_data[7]),
+                    "assists": float(pl_data[8]),
+                    "saves": float(pl_data[9]),
+                    "shots": float(pl_data[10]),
+                    "shots_allowed": float(pl_data[11]),
+                    "touches": float(pl_data[12]),
+                    "passes": float(pl_data[13]),
+                    "demos": float(pl_data[14]),
+                    "steals": float(pl_data[16]),
+                },
+                "mvmt": {
+                    "demos_taken": float(pl_data[15]),
+                },
+                "pssn": {
+                    "turnovers": float(pl_data[17]),
+                    "recoveries": float(pl_data[18]),
+                    "blocks": float(pl_data[19]),
+                    "prog_passes": float(pl_data[20]),
+                    "prog_dribbles": float(pl_data[21]),
+                    "rt_ratio": float(pl_data[22])
+                }
+            }
+    return event_data
+
 ### Image utilities
 
 def get_y(val, img_height):
